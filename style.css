@@ -9,7 +9,7 @@ header { display: flex; justify-content: space-between; padding: 10px; backgroun
     width: 100vw;
     height: 60vh;
     background-color: white;
-    background-image: url('rutas/a/tu/plantilla_cara1.png'); /* Se cambiará con JS */
+    background-image: url('plantilla_cara1.png');
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
