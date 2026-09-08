@@ -3,11 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Abatimientos</title>
-    <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="style.css">
-    <!-- Librería para arrastrar elementos táctilmente -->
+    <title>Abatimientos Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+    <style>
+        * { box-sizing: border-box; font-family: Arial, sans-serif; user-select: none; }
+        body { margin: 0; padding: 0; background-color: #e9ecef; overflow: hidden; }
+        header { display: flex; justify-content: space-between; padding: 12px; background: #343a40; color: white; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 10; position: relative;}
+        header h2 { margin: 0; font-size: 18px; }
+        header button { background: #495057; color: white; border: none; padding: 8px 12px; border-radius: 4px; font-weight: bold;}
+        #btn-guardar { background: #28a745; }
+        
+        #lienzo {
+            width: 100vw;
+            height: 65vh;
+            background-color: white;
+            background-image: url('plantilla_cara1.png');
+            background-size: contain;
+            background-position: center top;
+            background-repeat: no-repeat;
+            position: relative;
+            border-bottom: 2px solid #ccc;
+            touch-action: none;
+        }
+
+        .controles { display: flex; justify-content: space-around; padding: 15px; background: #fff; }
+        .controles button { padding: 15px; font-size: 16px; background: #007bff; color: white; border: none; border-radius: 8px; width: 45%; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
+        
+        /* Modal Conductos */
+        #modal-opciones { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 100; align-items: flex-end; }
+        .modal-content { background: white; width: 100%; border-radius: 20px 20px 0 0; padding: 20px; max-height: 70vh; overflow-y: auto; }
+        .modal-content h3 { margin-top: 0; border-bottom: 2px solid #dc3545; padding-bottom: 10px; color: #dc3545; }
+        .opcion-lista { padding: 15px; border-bottom: 1px solid #eee; font-size: 18px; display: flex; align-items: center; gap: 10px; }
+        .opcion-lista:active { background: #f8f9fa; }
+        .opcion-lista .circulo-ico { width: 20px; height: 20px; border: 2px solid #333; border-radius: 50%; }
+
+        /* Elementos Draggables */
+        .elemento-draggable {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 5px;
+            background: rgba(255, 255, 255, 0.7);
+            touch-action: none;
+            cursor: grab;
+        }
+        
+        /* Tipografías y Tubos */
+        .titulo-conducto { font-weight: bold; font-size: 16px; margin-bottom: 3px; color: #000; text-align: center; }
+        .grid-tubos { display: grid; gap: 2px; justify-items: center; }
+        .tubo-ind { width: 28px; height: 28px; border: 2px solid #2b4c7e; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; background: white; color: #8b5a2b; }
+
+        /* Estilo especial para el texto libre y (0,0) */
+        .texto-libre { font-size: 18px; font-weight: bold; color: #000; padding: 4px 8px; border: 1px dashed transparent; }
+        .texto-libre.cables-totales { color: #d32f2f; }
+        .elemento-draggable.selected .texto-libre { border-color: #007bff; background: rgba(0,123,255,0.1); }
+    </style>
 </head>
 <body>
     <header>
@@ -17,21 +68,232 @@
         <button id="btn-guardar">GUARDAR</button>
     </header>
 
-    <div class="cables-totales-container">
-        <label>CABLES TOTALES:</label>
-        <input type="text" id="cables-totales" placeholder="(0,0)">
-    </div>
-
-    <!-- El lienzo donde el operario dibuja -->
-    <div id="lienzo">
-        <!-- Los conductos y textos aparecerán aquí dentro -->
-    </div>
+    <div id="lienzo"></div>
 
     <div class="controles">
         <button id="btn-add-conducto">+ Conducto</button>
-        <button id="btn-add-texto">+ Texto</button>
+        <button id="btn-add-texto">+ Texto / Nota</button>
     </div>
 
-    <script src="app.js"></script>
+    <!-- Menú inferior de Conductos -->
+    <div id="modal-opciones">
+        <div class="modal-content">
+            <h3>Seleccionar Conducto</h3>
+            <div id="lista-conductos">
+                <!-- Se rellena por JS -->
+            </div>
+            <div class="opcion-lista" style="color:#007bff; font-weight:bold;" onclick="abrirPersonalizado()">
+                + Crear Personalizado...
+            </div>
+            <button onclick="cerrarModal()" style="width:100%; padding:15px; margin-top:15px; background:#6c757d; color:white; border:none; border-radius:8px; font-size:16px;">Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const arquetaId = urlParams.get('arqueta') || "SIN_ID";
+
+        let estadoLienzo = {
+            id_arqueta: arquetaId,
+            caras: { 1: [], 2: [], 3: [], 4: [] }
+        };
+
+        let caraActual = 1;
+        const lienzo = document.getElementById('lienzo');
+
+        // OPCIONES PREDEFINIDAS DE LA IMAGEN
+        const opcionesPredefinidas = [
+            { prisma: 1, diametro: 110 }, { prisma: 2, diametro: 110 }, { prisma: 4, diametro: 110 }, { prisma: 6, diametro: 110 },
+            { prisma: 1, diametro: 125 }, { prisma: 2, diametro: 125 }, { prisma: 4, diametro: 125 }, { prisma: 6, diametro: 125 },
+            { prisma: 2, diametro: 100 }, { prisma: 5, diametro: 200 }
+        ];
+
+        // INICIALIZACIÓN
+        function inicializar() {
+            renderizarListaConductos();
+            actualizarVistaCara();
+        }
+
+        // --- NAVEGACIÓN Y CARAS ---
+        function actualizarVistaCara() {
+            document.getElementById('titulo-cara').innerText = `Cara ${caraActual} / 4`;
+            lienzo.style.backgroundImage = `url('plantilla_cara${caraActual}.png')`;
+            
+            // Ocultar todos, mostrar los de esta cara
+            document.querySelectorAll('.elemento-draggable').forEach(el => {
+                el.style.display = (parseInt(el.getAttribute('data-cara')) === caraActual) ? 'flex' : 'none';
+            });
+
+            // Asegurar que exista el elemento (0,0) en esta cara
+            asegurarCablesTotales();
+        }
+
+        document.getElementById('btn-prev').addEventListener('click', () => { if (caraActual > 1) { caraActual--; actualizarVistaCara(); } });
+        document.getElementById('btn-next').addEventListener('click', () => { if (caraActual < 4) { caraActual++; actualizarVistaCara(); } });
+
+        // --- GESTIÓN DE CABLES TOTALES (0,0) ---
+        function asegurarCablesTotales() {
+            let existe = document.querySelector(`.elemento-draggable[data-cara="${caraActual}"][data-tipo="cables"]`);
+            if(!existe) {
+                crearElementoEnDOM('cables', '(0,0)', 50, 20, 0, 0, 0);
+            }
+        }
+
+        // --- MODAL Y CONDUCTOS ---
+        function renderizarListaConductos() {
+            let html = "";
+            opcionesPredefinidas.forEach(opc => {
+                html += `<div class="opcion-lista" onclick="seleccionarConducto(${opc.prisma}, ${opc.diametro})">
+                            <div class="circulo-ico"></div> ${opc.prisma} ø ${opc.diametro}
+                         </div>`;
+            });
+            document.getElementById('lista-conductos').innerHTML = html;
+        }
+
+        document.getElementById('btn-add-conducto').addEventListener('click', () => {
+            document.getElementById('modal-opciones').style.display = 'flex';
+        });
+
+        function cerrarModal() { document.getElementById('modal-opciones').style.display = 'none'; }
+
+        function seleccionarConducto(prisma, diametro) {
+            cerrarModal();
+            // Centrar en la pantalla
+            crearElementoEnDOM('conducto', '', 100, 100, prisma, diametro, 0);
+        }
+
+        function abrirPersonalizado() {
+            cerrarModal();
+            let p = prompt("Nº de Tubos (Prisma):");
+            let d = prompt("Diámetro:");
+            if(p && d) seleccionarConducto(p, d);
+        }
+
+        // --- BOTÓN TEXTO ---
+        document.getElementById('btn-add-texto').addEventListener('click', () => {
+            let texto = prompt("Escribe tu nota:");
+            if(texto) crearElementoEnDOM('texto', texto, 100, 100, 0, 0, 0);
+        });
+
+        // --- CREACIÓN GRÁFICA EN EL LIENZO ---
+        function crearElementoEnDOM(tipo, texto, x, y, prisma, diametro, rotacion) {
+            const div = document.createElement('div');
+            div.className = 'elemento-draggable';
+            div.setAttribute('data-x', x);
+            div.setAttribute('data-y', y);
+            div.setAttribute('data-tipo', tipo);
+            div.setAttribute('data-prisma', prisma);
+            div.setAttribute('data-diametro', diametro);
+            div.setAttribute('data-cara', caraActual);
+            div.setAttribute('data-rotacion', rotacion);
+
+            // Aplicar rotación y posición inicial
+            div.style.transform = `translate(${x}px, ${y}px) rotate(${rotacion}deg)`;
+
+            if(tipo === 'conducto') {
+                // Generar los tubos (Matriz dinámica)
+                let cols = prisma > 3 ? 2 : prisma; // Si son más de 3, lo hacemos en 2 columnas
+                if (prisma == 6) cols = 2; // Para 6 tubos, 2 columnas x 3 filas
+                
+                let inner = `<div class="titulo-conducto">${prisma} ø${diametro}</div>`;
+                inner += `<div class="grid-tubos" style="grid-template-columns: repeat(${cols}, 1fr);">`;
+                for(let i=1; i<=prisma; i++) {
+                    inner += `<div class="tubo-ind">${i}</div>`;
+                }
+                inner += `</div>`;
+                div.innerHTML = inner;
+
+                // Doble clic para rotar el conducto
+                div.addEventListener('dblclick', function(e) {
+                    let rot = parseInt(this.getAttribute('data-rotacion')) === 0 ? -90 : 0;
+                    this.setAttribute('data-rotacion', rot);
+                    let curX = this.getAttribute('data-x');
+                    let curY = this.getAttribute('data-y');
+                    this.style.transform = `translate(${curX}px, ${curY}px) rotate(${rot}deg)`;
+                });
+
+            } else {
+                // Para textos y cables (0,0)
+                let cl = tipo === 'cables' ? 'texto-libre cables-totales' : 'texto-libre';
+                div.innerHTML = `<div class="${cl}">${texto}</div>`;
+                
+                // Clic para editar texto
+                div.addEventListener('click', function(e) {
+                    let actual = this.innerText;
+                    let msg = tipo === 'cables' ? "Actualizar Cables Totales:" : "Editar nota:";
+                    let nuevo = prompt(msg, actual);
+                    if(nuevo !== null && nuevo.trim() !== "") {
+                        this.querySelector('.texto-libre').innerText = nuevo;
+                    }
+                });
+            }
+            
+            lienzo.appendChild(div);
+        }
+
+        // --- INTERACT.JS (ARRASTRE) ---
+        interact('.elemento-draggable').draggable({
+            inertia: true,
+            modifiers: [
+                interact.modifiers.restrictRect({
+                    restriction: 'parent',
+                    endOnly: true
+                })
+            ],
+            listeners: {
+                move (event) {
+                    let target = event.target;
+                    let x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+                    let y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+                    let rot = target.getAttribute('data-rotacion') || 0;
+                    
+                    target.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg)`;
+                    target.setAttribute('data-x', x);
+                    target.setAttribute('data-y', y);
+                }
+            }
+        });
+
+        // --- GUARDAR ---
+        document.getElementById('btn-guardar').addEventListener('click', () => {
+            // 1. PEGA AQUÍ TU URL DE APPS SCRIPT
+            const urlScript = "https://script.google.com/macros/s/AKfycbxV_e2__0A4icbrya5ErahfhCyNB4VWcRysKVubANKWZj83kgav2aGNIovUOejmzHL7/exec";
+
+            // Limpiar datos
+            for(let i=1; i<=4; i++) estadoLienzo.caras[i] = [];
+
+            // Recolectar lo que hay en pantalla
+            document.querySelectorAll('.elemento-draggable').forEach(el => {
+                let c = parseInt(el.getAttribute('data-cara'));
+                estadoLienzo.caras[c].push({
+                    tipo: el.getAttribute('data-tipo'),
+                    texto: el.innerText.split('\n')[0], // Capturar el título o texto libre
+                    prisma: el.getAttribute('data-prisma'),
+                    diametro: el.getAttribute('data-diametro'),
+                    x: el.getAttribute('data-x'),
+                    y: el.getAttribute('data-y'),
+                    rotacion: el.getAttribute('data-rotacion')
+                });
+            });
+
+            let btn = document.getElementById('btn-guardar');
+            btn.innerText = "Guardando...";
+
+            fetch(urlScript, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(estadoLienzo)
+            }).then(() => {
+                alert("¡Abatimiento guardado correctamente!");
+                btn.innerText = "GUARDAR";
+            }).catch(err => {
+                alert("Error de conexión al guardar.");
+                btn.innerText = "GUARDAR";
+            });
+        });
+
+        inicializar();
+    </script>
 </body>
 </html>
