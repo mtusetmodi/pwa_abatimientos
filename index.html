@@ -57,7 +57,6 @@
         /* Estilo especial para el texto libre y (0,0) */
         .texto-libre { font-size: 18px; font-weight: bold; color: #000; padding: 4px 8px; border: 1px dashed transparent; }
         .texto-libre.cables-totales { color: #d32f2f; }
-        .elemento-draggable.selected .texto-libre { border-color: #007bff; background: rgba(0,123,255,0.1); }
     </style>
 </head>
 <body>
@@ -79,9 +78,7 @@
     <div id="modal-opciones">
         <div class="modal-content">
             <h3>Seleccionar Conducto</h3>
-            <div id="lista-conductos">
-                <!-- Se rellena por JS -->
-            </div>
+            <div id="lista-conductos"></div>
             <div class="opcion-lista" style="color:#007bff; font-weight:bold;" onclick="abrirPersonalizado()">
                 + Crear Personalizado...
             </div>
@@ -93,53 +90,37 @@
         const urlParams = new URLSearchParams(window.location.search);
         const arquetaId = urlParams.get('arqueta') || "SIN_ID";
 
-        let estadoLienzo = {
-            id_arqueta: arquetaId,
-            caras: { 1: [], 2: [], 3: [], 4: [] }
-        };
-
+        let estadoLienzo = { id_arqueta: arquetaId, caras: { 1: [], 2: [], 3: [], 4: [] } };
         let caraActual = 1;
         const lienzo = document.getElementById('lienzo');
 
-        // OPCIONES PREDEFINIDAS DE LA IMAGEN
         const opcionesPredefinidas = [
             { prisma: 1, diametro: 110 }, { prisma: 2, diametro: 110 }, { prisma: 4, diametro: 110 }, { prisma: 6, diametro: 110 },
             { prisma: 1, diametro: 125 }, { prisma: 2, diametro: 125 }, { prisma: 4, diametro: 125 }, { prisma: 6, diametro: 125 },
             { prisma: 2, diametro: 100 }, { prisma: 5, diametro: 200 }
         ];
 
-        // INICIALIZACIÓN
-        function inicializar() {
-            renderizarListaConductos();
-            actualizarVistaCara();
-        }
+        function inicializar() { renderizarListaConductos(); actualizarVistaCara(); }
 
-        // --- NAVEGACIÓN Y CARAS ---
         function actualizarVistaCara() {
             document.getElementById('titulo-cara').innerText = `Cara ${caraActual} / 4`;
             lienzo.style.backgroundImage = `url('plantilla_cara${caraActual}.png')`;
             
-            // Ocultar todos, mostrar los de esta cara
             document.querySelectorAll('.elemento-draggable').forEach(el => {
                 el.style.display = (parseInt(el.getAttribute('data-cara')) === caraActual) ? 'flex' : 'none';
             });
-
-            // Asegurar que exista el elemento (0,0) en esta cara
             asegurarCablesTotales();
         }
 
         document.getElementById('btn-prev').addEventListener('click', () => { if (caraActual > 1) { caraActual--; actualizarVistaCara(); } });
         document.getElementById('btn-next').addEventListener('click', () => { if (caraActual < 4) { caraActual++; actualizarVistaCara(); } });
 
-        // --- GESTIÓN DE CABLES TOTALES (0,0) ---
         function asegurarCablesTotales() {
-            let existe = document.querySelector(`.elemento-draggable[data-cara="${caraActual}"][data-tipo="cables"]`);
-            if(!existe) {
-                crearElementoEnDOM('cables', '(0,0)', 50, 20, 0, 0, 0);
+            if(!document.querySelector(`.elemento-draggable[data-cara="${caraActual}"][data-tipo="cables"]`)) {
+                crearElementoEnDOM('cables', '(0,0)', 50, 20, 0, 0, 0, 1);
             }
         }
 
-        // --- MODAL Y CONDUCTOS ---
         function renderizarListaConductos() {
             let html = "";
             opcionesPredefinidas.forEach(opc => {
@@ -150,17 +131,10 @@
             document.getElementById('lista-conductos').innerHTML = html;
         }
 
-        document.getElementById('btn-add-conducto').addEventListener('click', () => {
-            document.getElementById('modal-opciones').style.display = 'flex';
-        });
-
+        document.getElementById('btn-add-conducto').addEventListener('click', () => { document.getElementById('modal-opciones').style.display = 'flex'; });
         function cerrarModal() { document.getElementById('modal-opciones').style.display = 'none'; }
 
-        function seleccionarConducto(prisma, diametro) {
-            cerrarModal();
-            // Centrar en la pantalla
-            crearElementoEnDOM('conducto', '', 100, 100, prisma, diametro, 0);
-        }
+        function seleccionarConducto(prisma, diametro) { cerrarModal(); crearElementoEnDOM('conducto', '', 100, 100, prisma, diametro, 0, 1); }
 
         function abrirPersonalizado() {
             cerrarModal();
@@ -169,14 +143,13 @@
             if(p && d) seleccionarConducto(p, d);
         }
 
-        // --- BOTÓN TEXTO ---
         document.getElementById('btn-add-texto').addEventListener('click', () => {
             let texto = prompt("Escribe tu nota:");
-            if(texto) crearElementoEnDOM('texto', texto, 100, 100, 0, 0, 0);
+            if(texto) crearElementoEnDOM('texto', texto, 100, 100, 0, 0, 0, 1);
         });
 
-        // --- CREACIÓN GRÁFICA EN EL LIENZO ---
-        function crearElementoEnDOM(tipo, texto, x, y, prisma, diametro, rotacion) {
+        // NUEVO: Añadido atributo "escala" (scale) al crear elementos
+        function crearElementoEnDOM(tipo, texto, x, y, prisma, diametro, rotacion, escala) {
             const div = document.createElement('div');
             div.className = 'elemento-draggable';
             div.setAttribute('data-x', x);
@@ -186,93 +159,101 @@
             div.setAttribute('data-diametro', diametro);
             div.setAttribute('data-cara', caraActual);
             div.setAttribute('data-rotacion', rotacion);
+            div.setAttribute('data-scale', escala);
 
-            // Aplicar rotación y posición inicial
-            div.style.transform = `translate(${x}px, ${y}px) rotate(${rotacion}deg)`;
+            div.style.transform = `translate(${x}px, ${y}px) rotate(${rotacion}deg) scale(${escala})`;
 
             if(tipo === 'conducto') {
-                // Generar los tubos (Matriz dinámica)
-                let cols = prisma > 3 ? 2 : prisma; // Si son más de 3, lo hacemos en 2 columnas
-                if (prisma == 6) cols = 2; // Para 6 tubos, 2 columnas x 3 filas
+                let cols = prisma > 3 ? 2 : prisma; 
+                if (prisma == 6) cols = 2; 
                 
                 let inner = `<div class="titulo-conducto">${prisma} ø${diametro}</div>`;
                 inner += `<div class="grid-tubos" style="grid-template-columns: repeat(${cols}, 1fr);">`;
-                for(let i=1; i<=prisma; i++) {
-                    inner += `<div class="tubo-ind">${i}</div>`;
-                }
+                for(let i=1; i<=prisma; i++) inner += `<div class="tubo-ind">${i}</div>`;
                 inner += `</div>`;
                 div.innerHTML = inner;
 
-                // Doble clic para rotar el conducto
                 div.addEventListener('dblclick', function(e) {
                     let rot = parseInt(this.getAttribute('data-rotacion')) === 0 ? -90 : 0;
                     this.setAttribute('data-rotacion', rot);
                     let curX = this.getAttribute('data-x');
                     let curY = this.getAttribute('data-y');
-                    this.style.transform = `translate(${curX}px, ${curY}px) rotate(${rot}deg)`;
+                    let curScale = this.getAttribute('data-scale');
+                    this.style.transform = `translate(${curX}px, ${curY}px) rotate(${rot}deg) scale(${curScale})`;
                 });
 
             } else {
-                // Para textos y cables (0,0)
                 let cl = tipo === 'cables' ? 'texto-libre cables-totales' : 'texto-libre';
                 div.innerHTML = `<div class="${cl}">${texto}</div>`;
                 
-                // Clic para editar texto
                 div.addEventListener('click', function(e) {
                     let actual = this.innerText;
                     let msg = tipo === 'cables' ? "Actualizar Cables Totales:" : "Editar nota:";
                     let nuevo = prompt(msg, actual);
-                    if(nuevo !== null && nuevo.trim() !== "") {
-                        this.querySelector('.texto-libre').innerText = nuevo;
-                    }
+                    if(nuevo !== null && nuevo.trim() !== "") this.querySelector('.texto-libre').innerText = nuevo;
                 });
             }
-            
             lienzo.appendChild(div);
         }
 
-        // --- INTERACT.JS (ARRASTRE) ---
-        interact('.elemento-draggable').draggable({
-            inertia: true,
-            modifiers: [
-                interact.modifiers.restrictRect({
-                    restriction: 'parent',
-                    endOnly: true
-                })
-            ],
-            listeners: {
-                move (event) {
-                    let target = event.target;
-                    let x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
-                    let y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
-                    let rot = target.getAttribute('data-rotacion') || 0;
-                    
-                    target.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg)`;
-                    target.setAttribute('data-x', x);
-                    target.setAttribute('data-y', y);
+        // NUEVO: Añadida la función gesturable para Zoom con dos dedos
+        interact('.elemento-draggable')
+            .draggable({
+                inertia: true,
+                modifiers: [ interact.modifiers.restrictRect({ restriction: 'parent', endOnly: true }) ],
+                listeners: {
+                    move (event) {
+                        let target = event.target;
+                        let x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+                        let y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+                        let rot = target.getAttribute('data-rotacion') || 0;
+                        let scale = target.getAttribute('data-scale') || 1;
+                        
+                        target.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg) scale(${scale})`;
+                        target.setAttribute('data-x', x);
+                        target.setAttribute('data-y', y);
+                    }
                 }
-            }
-        });
+            })
+            .gesturable({
+                listeners: {
+                    move (event) {
+                        let target = event.target;
+                        let x = parseFloat(target.getAttribute('data-x')) || 0;
+                        let y = parseFloat(target.getAttribute('data-y')) || 0;
+                        let rot = target.getAttribute('data-rotacion') || 0;
+                        let scale = parseFloat(target.getAttribute('data-scale')) || 1;
 
-        // --- GUARDAR ---
+                        // Modificar la escala con el gesto de pellizcar (pinch)
+                        scale += event.ds;
+
+                        // Límites de Zoom (0.4 mínimo, 3x máximo)
+                        if (scale < 0.4) scale = 0.4;
+                        if (scale > 3) scale = 3;
+
+                        target.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg) scale(${scale})`;
+                        target.setAttribute('data-scale', scale);
+                    }
+                }
+            });
+
         document.getElementById('btn-guardar').addEventListener('click', () => {
             // 1. PEGA AQUÍ TU URL DE APPS SCRIPT
             const urlScript = "https://script.google.com/macros/s/AKfycbxV_e2__0A4icbrya5ErahfhCyNB4VWcRysKVubANKWZj83kgav2aGNIovUOejmzHL7/exec";
 
-            // Limpiar datos
             for(let i=1; i<=4; i++) estadoLienzo.caras[i] = [];
 
-            // Recolectar lo que hay en pantalla
             document.querySelectorAll('.elemento-draggable').forEach(el => {
                 let c = parseInt(el.getAttribute('data-cara'));
                 estadoLienzo.caras[c].push({
                     tipo: el.getAttribute('data-tipo'),
-                    texto: el.innerText.split('\n')[0], // Capturar el título o texto libre
+                    texto: el.innerText.split('\n')[0],
                     prisma: el.getAttribute('data-prisma'),
                     diametro: el.getAttribute('data-diametro'),
                     x: el.getAttribute('data-x'),
                     y: el.getAttribute('data-y'),
-                    rotacion: el.getAttribute('data-rotacion')
+                    rotacion: el.getAttribute('data-rotacion'),
+                    escala: el.getAttribute('data-scale') // NUEVO: Guardamos la escala actual
                 });
             });
 
