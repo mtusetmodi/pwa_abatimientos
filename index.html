@@ -3,23 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Abatimientos Pro</title>
+    <title>Abatimiento Completo</title>
     <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
     <style>
         * { box-sizing: border-box; font-family: Arial, sans-serif; user-select: none; }
         body { margin: 0; padding: 0; background-color: #e9ecef; overflow: hidden; }
         header { display: flex; justify-content: space-between; padding: 12px; background: #343a40; color: white; align-items: center; z-index: 10; position: relative;}
         header h2 { margin: 0; font-size: 18px; }
-        header button { background: #495057; color: white; border: none; padding: 8px 12px; border-radius: 4px; font-weight: bold;}
-        #btn-guardar { background: #28a745; }
+        #btn-guardar { background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; font-size: 15px;}
         
         #lienzo {
             width: 100vw;
-            height: 48vh; 
+            height: 52vh; 
             background-color: white;
-            background-image: url('plantilla_cara1.png');
+            background-image: url('plantilla_cruz.png');
             background-size: contain;
-            background-position: center top;
+            background-position: center center;
             background-repeat: no-repeat;
             position: relative;
             border-bottom: 2px solid #ccc;
@@ -29,6 +28,7 @@
         .controles { display: flex; justify-content: space-around; padding: 10px; background: #fff; }
         .controles button { padding: 12px; font-size: 16px; background: #007bff; color: white; border: none; border-radius: 8px; width: 45%; font-weight: bold;}
         
+        /* Filas de herramientas */
         .herramientas { display: flex; justify-content: space-between; gap: 5px; padding: 8px 10px; background: #f8f9fa; border-top: 1px solid #ddd; }
         .herramientas button { flex: 1; padding: 10px 5px; font-size: 16px; background: #6c757d; color: white; border: none; border-radius: 8px; font-weight: bold; text-align: center;}
         .herramientas button:active { background: #5a6268; }
@@ -43,26 +43,23 @@
         
         .elemento-draggable {
             position: absolute; display: flex; flex-direction: column; align-items: center;
-            padding: 5px; background: rgba(255, 255, 255, 0.8); touch-action: none; cursor: grab;
-            border-radius: 8px; border: 2px solid transparent;
+            padding: 4px; background: rgba(255, 255, 255, 0.85); touch-action: none; cursor: grab;
+            border-radius: 6px; border: 2px solid transparent;
         }
         
         .elemento-draggable.selected { border-color: #007bff; box-shadow: 0 0 10px rgba(0,123,255,0.5); background: white; z-index: 50;}
 
-        .titulo-conducto { font-weight: bold; font-size: 16px; margin-bottom: 3px; color: #000; text-align: center; }
+        .titulo-conducto { font-weight: bold; font-size: 14px; margin-bottom: 2px; color: #000; text-align: center; }
         .grid-tubos { display: grid; gap: 2px; justify-items: center; }
-        .tubo-ind { width: 28px; height: 28px; border: 2px solid #2b4c7e; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; background: white; color: #8b5a2b; }
+        .tubo-ind { width: 24px; height: 24px; border: 2px solid #2b4c7e; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; background: white; color: #8b5a2b; }
 
-        .texto-libre { font-size: 18px; font-weight: bold; color: #000; padding: 4px 8px; }
-        /* CABLES TOTALES AHORA EN NEGRO */
+        .texto-libre { font-size: 16px; font-weight: bold; color: #000; padding: 2px 6px; }
         .texto-libre.cables-totales { color: #000; }
     </style>
 </head>
 <body>
     <header>
-        <button id="btn-prev">←</button>
-        <h2 id="titulo-cara">Cara 1 / 4</h2>
-        <button id="btn-next">→</button>
+        <h2 id="titulo-app">Abatimiento General</h2>
         <button id="btn-guardar">GUARDAR</button>
     </header>
 
@@ -99,8 +96,7 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const arquetaId = urlParams.get('arqueta') || "SIN_ID";
-        let estadoLienzo = { id_arqueta: arquetaId, caras: { 1: [], 2: [], 3: [], 4: [] } };
-        let caraActual = 1;
+        let estadoLienzo = { id_arqueta: arquetaId, elementos: [] };
         const lienzo = document.getElementById('lienzo');
 
         let elementosSeleccionados = new Set();
@@ -112,7 +108,10 @@
             { prisma: 2, diametro: 100 }, { prisma: 5, diametro: 200 }
         ];
 
-        function inicializar() { renderizarListaConductos(); actualizarVistaCara(); }
+        function inicializar() { 
+            renderizarListaConductos(); 
+            asegurarCablesTotalesCruz();
+        }
 
         function seleccionarElemento(el) {
             if (!el) {
@@ -186,24 +185,13 @@
         document.getElementById('btn-rotar-izq').addEventListener('click', () => cambiarRotacionManual(-90));
         document.getElementById('btn-rotar-der').addEventListener('click', () => cambiarRotacionManual(90));
 
-        function actualizarVistaCara() {
+        // Inicializar 4 textos (0,0) posicionados aproximadamente sobre cada cara en la cruz
+        function asegurarCablesTotalesCruz() {
+            crearElementoEnDOM('cables', '(0,0)', 150, 40, 0, 0, 0, 1);  // Cara A (Arriba)
+            crearElementoEnDOM('cables', '(0,0)', 260, 170, 0, 0, 0, 1); // Cara B (Derecha)
+            crearElementoEnDOM('cables', '(0,0)', 150, 310, 0, 0, 0, 1); // Cara C (Abajo)
+            crearElementoEnDOM('cables', '(0,0)', 40, 170, 0, 0, 0, 1);  // Cara D (Izquierda)
             seleccionarElemento(null);
-            document.getElementById('titulo-cara').innerText = `Cara ${caraActual} / 4`;
-            lienzo.style.backgroundImage = `url('plantilla_cara${caraActual}.png')`;
-            
-            document.querySelectorAll('.elemento-draggable').forEach(el => {
-                el.style.display = (parseInt(el.getAttribute('data-cara')) === caraActual) ? 'flex' : 'none';
-            });
-            asegurarCablesTotales();
-        }
-
-        document.getElementById('btn-prev').addEventListener('click', () => { if (caraActual > 1) { caraActual--; actualizarVistaCara(); } });
-        document.getElementById('btn-next').addEventListener('click', () => { if (caraActual < 4) { caraActual++; actualizarVistaCara(); } });
-
-        function asegurarCablesTotales() {
-            if(!document.querySelector(`.elemento-draggable[data-cara="${caraActual}"][data-tipo="cables"]`)) {
-                crearElementoEnDOM('cables', '(0,0)', 50, 20, 0, 0, 0, 1);
-            }
         }
 
         function renderizarListaConductos() {
@@ -219,7 +207,7 @@
         document.getElementById('btn-add-conducto').addEventListener('click', () => { document.getElementById('modal-opciones').style.display = 'flex'; });
         function cerrarModal() { document.getElementById('modal-opciones').style.display = 'none'; }
 
-        function seleccionarConducto(prisma, diametro) { cerrarModal(); crearElementoEnDOM('conducto', '', 100, 100, prisma, diametro, 0, 1); }
+        function seleccionarConducto(prisma, diametro) { cerrarModal(); crearElementoEnDOM('conducto', '', 140, 180, prisma, diametro, 0, 1); }
 
         function abrirPersonalizado() {
             cerrarModal();
@@ -230,7 +218,7 @@
 
         document.getElementById('btn-add-texto').addEventListener('click', () => {
             let texto = prompt("Escribe tu nota:");
-            if(texto) crearElementoEnDOM('texto', texto, 100, 100, 0, 0, 0, 1);
+            if(texto) crearElementoEnDOM('texto', texto, 140, 180, 0, 0, 0, 1);
         });
 
         function crearElementoEnDOM(tipo, texto, x, y, prisma, diametro, rotacion, escala) {
@@ -241,7 +229,6 @@
             div.setAttribute('data-tipo', tipo);
             div.setAttribute('data-prisma', prisma);
             div.setAttribute('data-diametro', diametro);
-            div.setAttribute('data-cara', caraActual);
             div.setAttribute('data-rotacion', rotacion);
             div.setAttribute('data-scale', escala);
 
@@ -336,11 +323,10 @@
         document.getElementById('btn-guardar').addEventListener('click', () => {
             const urlScript = "https://script.google.com/macros/s/AKfycbxV_e2__0A4icbrya5ErahfhCyNB4VWcRysKVubANKWZj83kgav2aGNIovUOejmzHL7/exec"; 
 
-            for(let i=1; i<=4; i++) estadoLienzo.caras[i] = [];
+            estadoLienzo.elementos = [];
 
             document.querySelectorAll('.elemento-draggable').forEach(el => {
-                let c = parseInt(el.getAttribute('data-cara'));
-                estadoLienzo.caras[c].push({
+                estadoLienzo.elementos.push({
                     tipo: el.getAttribute('data-tipo'),
                     texto: el.innerText.split('\n')[0],
                     prisma: el.getAttribute('data-prisma'),
