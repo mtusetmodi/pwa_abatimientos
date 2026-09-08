@@ -1,0 +1,35 @@
+* { box-sizing: border-box; font-family: Arial, sans-serif; }
+body { margin: 0; padding: 0; background-color: #f4f4f4; overflow: hidden; /* Evita scroll indeseado al arrastrar */ }
+
+header { display: flex; justify-content: space-between; padding: 10px; background: #333; color: white; align-items: center;}
+.cables-totales-container { padding: 10px; background: #fff; display: flex; align-items: center; gap: 10px;}
+.cables-totales-container input { font-size: 16px; padding: 5px; width: 100px; }
+
+#lienzo {
+    width: 100vw;
+    height: 60vh;
+    background-color: white;
+    background-image: url('rutas/a/tu/plantilla_cara1.png'); /* Se cambiará con JS */
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    position: relative; /* Clave para posicionar elementos dentro */
+    border-bottom: 2px solid #ccc;
+}
+
+.controles { display: flex; justify-content: space-around; padding: 15px; }
+.controles button { padding: 15px; font-size: 16px; background: #007bff; color: white; border: none; border-radius: 8px; width: 45%; }
+
+/* Estilo del conducto arrastrable */
+.elemento-draggable {
+    position: absolute;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid #000;
+    border-radius: 4px;
+    font-weight: bold;
+    touch-action: none; /* Obligatorio para interact.js en móviles */
+}

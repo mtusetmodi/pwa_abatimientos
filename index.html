@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Abatimientos</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+    <!-- Librería para arrastrar elementos táctilmente -->
+    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+</head>
+<body>
+    <header>
+        <button id="btn-prev">←</button>
+        <h2 id="titulo-cara">Cara 1 / 4</h2>
+        <button id="btn-next">→</button>
+        <button id="btn-guardar">GUARDAR</button>
+    </header>
+
+    <div class="cables-totales-container">
+        <label>CABLES TOTALES:</label>
+        <input type="text" id="cables-totales" placeholder="(0,0)">
+    </div>
+
+    <!-- El lienzo donde el operario dibuja -->
+    <div id="lienzo">
+        <!-- Los conductos y textos aparecerán aquí dentro -->
+    </div>
+
+    <div class="controles">
+        <button id="btn-add-conducto">+ Conducto</button>
+        <button id="btn-add-texto">+ Texto</button>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
