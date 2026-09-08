@@ -15,7 +15,7 @@
         
         #lienzo {
             width: 100vw;
-            height: 55vh;
+            height: 48vh; 
             background-color: white;
             background-image: url('plantilla_cara1.png');
             background-size: contain;
@@ -29,9 +29,12 @@
         .controles { display: flex; justify-content: space-around; padding: 10px; background: #fff; }
         .controles button { padding: 12px; font-size: 16px; background: #007bff; color: white; border: none; border-radius: 8px; width: 45%; font-weight: bold;}
         
-        .herramientas { display: flex; justify-content: center; gap: 15px; padding: 10px; background: #f8f9fa; border-top: 1px solid #ddd; }
-        .herramientas button { padding: 10px 20px; font-size: 18px; background: #6c757d; color: white; border: none; border-radius: 8px; font-weight: bold; width: 40%;}
+        .herramientas { display: flex; justify-content: space-between; gap: 5px; padding: 8px 10px; background: #f8f9fa; border-top: 1px solid #ddd; }
+        .herramientas button { flex: 1; padding: 10px 5px; font-size: 16px; background: #6c757d; color: white; border: none; border-radius: 8px; font-weight: bold; text-align: center;}
         .herramientas button:active { background: #5a6268; }
+        
+        #btn-eliminar { background: #dc3545; } 
+        #btn-eliminar:active { background: #c82333; }
 
         #modal-opciones { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 100; align-items: flex-end; }
         .modal-content { background: white; width: 100%; border-radius: 20px 20px 0 0; padding: 20px; max-height: 70vh; overflow-y: auto; }
@@ -51,7 +54,8 @@
         .tubo-ind { width: 28px; height: 28px; border: 2px solid #2b4c7e; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; background: white; color: #8b5a2b; }
 
         .texto-libre { font-size: 18px; font-weight: bold; color: #000; padding: 4px 8px; }
-        .texto-libre.cables-totales { color: #d32f2f; }
+        /* CABLES TOTALES AHORA EN NEGRO */
+        .texto-libre.cables-totales { color: #000; }
     </style>
 </head>
 <body>
@@ -72,6 +76,13 @@
     <div class="herramientas">
         <button id="btn-zoom-out">➖ Zoom</button>
         <button id="btn-zoom-in">➕ Zoom</button>
+        <button id="btn-rotar-izq">↺ Girar</button>
+        <button id="btn-rotar-der">↻ Girar</button>
+    </div>
+    
+    <div class="herramientas">
+        <button id="btn-eliminar">🗑️ Eliminar</button>
+        <button id="btn-multi">☐ Sel. Múltiple</button>
     </div>
 
     <div id="modal-opciones">
@@ -90,8 +101,10 @@
         const arquetaId = urlParams.get('arqueta') || "SIN_ID";
         let estadoLienzo = { id_arqueta: arquetaId, caras: { 1: [], 2: [], 3: [], 4: [] } };
         let caraActual = 1;
-        let elementoSeleccionado = null;
         const lienzo = document.getElementById('lienzo');
+
+        let elementosSeleccionados = new Set();
+        let modoSeleccionMultiple = false;
 
         const opcionesPredefinidas = [
             { prisma: 1, diametro: 110 }, { prisma: 2, diametro: 110 }, { prisma: 4, diametro: 110 }, { prisma: 6, diametro: 110 },
@@ -102,33 +115,76 @@
         function inicializar() { renderizarListaConductos(); actualizarVistaCara(); }
 
         function seleccionarElemento(el) {
-            if(elementoSeleccionado) elementoSeleccionado.classList.remove('selected');
-            elementoSeleccionado = el;
-            if(el) el.classList.add('selected');
+            if (!el) {
+                elementosSeleccionados.forEach(e => e.classList.remove('selected'));
+                elementosSeleccionados.clear();
+                return;
+            }
+
+            if (modoSeleccionMultiple) {
+                if (elementosSeleccionados.has(el)) {
+                    el.classList.remove('selected');
+                    elementosSeleccionados.delete(el);
+                } else {
+                    el.classList.add('selected');
+                    elementosSeleccionados.add(el);
+                }
+            } else {
+                elementosSeleccionados.forEach(e => e.classList.remove('selected'));
+                elementosSeleccionados.clear();
+                el.classList.add('selected');
+                elementosSeleccionados.add(el);
+            }
         }
 
         lienzo.addEventListener('click', (e) => {
             if(e.target === lienzo) seleccionarElemento(null);
         });
 
+        const btnMulti = document.getElementById('btn-multi');
+        btnMulti.addEventListener('click', () => {
+            modoSeleccionMultiple = !modoSeleccionMultiple;
+            btnMulti.style.backgroundColor = modoSeleccionMultiple ? '#28a745' : '#6c757d';
+            btnMulti.innerText = modoSeleccionMultiple ? '☑️ Sel. Múltiple' : '☐ Sel. Múltiple';
+        });
+
+        document.getElementById('btn-eliminar').addEventListener('click', () => {
+            elementosSeleccionados.forEach(el => el.remove());
+            elementosSeleccionados.clear();
+        });
+
         function cambiarZoomManual(delta) {
-            if(!elementoSeleccionado) return;
-            let el = elementoSeleccionado;
-            let x = parseFloat(el.getAttribute('data-x')) || 0;
-            let y = parseFloat(el.getAttribute('data-y')) || 0;
-            let rot = el.getAttribute('data-rotacion') || 0;
-            let scale = parseFloat(el.getAttribute('data-scale')) || 1;
+            elementosSeleccionados.forEach(el => {
+                let x = parseFloat(el.getAttribute('data-x')) || 0;
+                let y = parseFloat(el.getAttribute('data-y')) || 0;
+                let rot = el.getAttribute('data-rotacion') || 0;
+                let scale = parseFloat(el.getAttribute('data-scale')) || 1;
 
-            scale += delta;
-            if (scale < 0.4) scale = 0.4;
-            if (scale > 3) scale = 3;
+                scale += delta;
+                if (scale < 0.4) scale = 0.4;
+                if (scale > 3) scale = 3;
 
-            el.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg) scale(${scale})`;
-            el.setAttribute('data-scale', scale);
+                el.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg) scale(${scale})`;
+                el.setAttribute('data-scale', scale);
+            });
+        }
+
+        function cambiarRotacionManual(grados) {
+            elementosSeleccionados.forEach(el => {
+                let x = parseFloat(el.getAttribute('data-x')) || 0;
+                let y = parseFloat(el.getAttribute('data-y')) || 0;
+                let rot = (parseFloat(el.getAttribute('data-rotacion')) || 0) + grados;
+                let scale = parseFloat(el.getAttribute('data-scale')) || 1;
+
+                el.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg) scale(${scale})`;
+                el.setAttribute('data-rotacion', rot);
+            });
         }
 
         document.getElementById('btn-zoom-in').addEventListener('click', () => cambiarZoomManual(0.1));
         document.getElementById('btn-zoom-out').addEventListener('click', () => cambiarZoomManual(-0.1));
+        document.getElementById('btn-rotar-izq').addEventListener('click', () => cambiarRotacionManual(-90));
+        document.getElementById('btn-rotar-der').addEventListener('click', () => cambiarRotacionManual(90));
 
         function actualizarVistaCara() {
             seleccionarElemento(null);
@@ -207,12 +263,8 @@
                 div.innerHTML = inner;
 
                 div.addEventListener('dblclick', function(e) {
-                    let rot = parseInt(this.getAttribute('data-rotacion')) === 0 ? -90 : 0;
-                    this.setAttribute('data-rotacion', rot);
-                    let curX = this.getAttribute('data-x');
-                    let curY = this.getAttribute('data-y');
-                    let curScale = this.getAttribute('data-scale');
-                    this.style.transform = `translate(${curX}px, ${curY}px) rotate(${rot}deg) scale(${curScale})`;
+                    if (!elementosSeleccionados.has(this)) seleccionarElemento(this);
+                    cambiarRotacionManual(90);
                 });
 
             } else {
@@ -227,7 +279,13 @@
                 });
             }
             lienzo.appendChild(div);
-            seleccionarElemento(div);
+            
+            if (!modoSeleccionMultiple) {
+                seleccionarElemento(div);
+            } else {
+                div.classList.add('selected');
+                elementosSeleccionados.add(div);
+            }
         }
 
         interact('.elemento-draggable')
@@ -235,36 +293,42 @@
                 inertia: true,
                 modifiers: [ interact.modifiers.restrictRect({ restriction: 'parent', endOnly: true }) ],
                 listeners: {
-                    start(event) { seleccionarElemento(event.target); },
+                    start(event) { 
+                        if (!elementosSeleccionados.has(event.target)) seleccionarElemento(event.target); 
+                    },
                     move (event) {
-                        let target = event.target;
-                        let x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
-                        let y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
-                        let rot = target.getAttribute('data-rotacion') || 0;
-                        let scale = target.getAttribute('data-scale') || 1;
-                        
-                        target.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg) scale(${scale})`;
-                        target.setAttribute('data-x', x);
-                        target.setAttribute('data-y', y);
+                        elementosSeleccionados.forEach(el => {
+                            let x = (parseFloat(el.getAttribute('data-x')) || 0) + event.dx;
+                            let y = (parseFloat(el.getAttribute('data-y')) || 0) + event.dy;
+                            let rot = el.getAttribute('data-rotacion') || 0;
+                            let scale = el.getAttribute('data-scale') || 1;
+                            
+                            el.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg) scale(${scale})`;
+                            el.setAttribute('data-x', x);
+                            el.setAttribute('data-y', y);
+                        });
                     }
                 }
             })
             .gesturable({
                 listeners: {
-                    start(event) { seleccionarElemento(event.target); },
+                    start(event) { 
+                        if (!elementosSeleccionados.has(event.target)) seleccionarElemento(event.target); 
+                    },
                     move (event) {
-                        let target = event.target;
-                        let x = parseFloat(target.getAttribute('data-x')) || 0;
-                        let y = parseFloat(target.getAttribute('data-y')) || 0;
-                        let rot = target.getAttribute('data-rotacion') || 0;
-                        let scale = parseFloat(target.getAttribute('data-scale')) || 1;
+                        elementosSeleccionados.forEach(el => {
+                            let x = parseFloat(el.getAttribute('data-x')) || 0;
+                            let y = parseFloat(el.getAttribute('data-y')) || 0;
+                            let rot = el.getAttribute('data-rotacion') || 0;
+                            let scale = parseFloat(el.getAttribute('data-scale')) || 1;
 
-                        scale += event.ds;
-                        if (scale < 0.4) scale = 0.4;
-                        if (scale > 3) scale = 3;
+                            scale += event.ds;
+                            if (scale < 0.4) scale = 0.4;
+                            if (scale > 3) scale = 3;
 
-                        target.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg) scale(${scale})`;
-                        target.setAttribute('data-scale', scale);
+                            el.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg) scale(${scale})`;
+                            el.setAttribute('data-scale', scale);
+                        });
                     }
                 }
             });
