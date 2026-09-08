@@ -8,14 +8,14 @@
     <style>
         * { box-sizing: border-box; font-family: Arial, sans-serif; user-select: none; }
         body { margin: 0; padding: 0; background-color: #e9ecef; overflow: hidden; }
-        header { display: flex; justify-content: space-between; padding: 12px; background: #343a40; color: white; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 10; position: relative;}
+        header { display: flex; justify-content: space-between; padding: 12px; background: #343a40; color: white; align-items: center; z-index: 10; position: relative;}
         header h2 { margin: 0; font-size: 18px; }
         header button { background: #495057; color: white; border: none; padding: 8px 12px; border-radius: 4px; font-weight: bold;}
         #btn-guardar { background: #28a745; }
         
         #lienzo {
             width: 100vw;
-            height: 65vh;
+            height: 55vh;
             background-color: white;
             background-image: url('plantilla_cara1.png');
             background-size: contain;
@@ -26,36 +26,31 @@
             touch-action: none;
         }
 
-        .controles { display: flex; justify-content: space-around; padding: 15px; background: #fff; }
-        .controles button { padding: 15px; font-size: 16px; background: #007bff; color: white; border: none; border-radius: 8px; width: 45%; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
+        .controles { display: flex; justify-content: space-around; padding: 10px; background: #fff; }
+        .controles button { padding: 12px; font-size: 16px; background: #007bff; color: white; border: none; border-radius: 8px; width: 45%; font-weight: bold;}
         
-        /* Modal Conductos */
+        .herramientas { display: flex; justify-content: center; gap: 15px; padding: 10px; background: #f8f9fa; border-top: 1px solid #ddd; }
+        .herramientas button { padding: 10px 20px; font-size: 18px; background: #6c757d; color: white; border: none; border-radius: 8px; font-weight: bold; width: 40%;}
+        .herramientas button:active { background: #5a6268; }
+
         #modal-opciones { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 100; align-items: flex-end; }
         .modal-content { background: white; width: 100%; border-radius: 20px 20px 0 0; padding: 20px; max-height: 70vh; overflow-y: auto; }
         .modal-content h3 { margin-top: 0; border-bottom: 2px solid #dc3545; padding-bottom: 10px; color: #dc3545; }
         .opcion-lista { padding: 15px; border-bottom: 1px solid #eee; font-size: 18px; display: flex; align-items: center; gap: 10px; }
-        .opcion-lista:active { background: #f8f9fa; }
-        .opcion-lista .circulo-ico { width: 20px; height: 20px; border: 2px solid #333; border-radius: 50%; }
-
-        /* Elementos Draggables */
+        
         .elemento-draggable {
-            position: absolute;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 5px;
-            background: rgba(255, 255, 255, 0.7);
-            touch-action: none;
-            cursor: grab;
+            position: absolute; display: flex; flex-direction: column; align-items: center;
+            padding: 5px; background: rgba(255, 255, 255, 0.8); touch-action: none; cursor: grab;
+            border-radius: 8px; border: 2px solid transparent;
         }
         
-        /* Tipografías y Tubos */
+        .elemento-draggable.selected { border-color: #007bff; box-shadow: 0 0 10px rgba(0,123,255,0.5); background: white; z-index: 50;}
+
         .titulo-conducto { font-weight: bold; font-size: 16px; margin-bottom: 3px; color: #000; text-align: center; }
         .grid-tubos { display: grid; gap: 2px; justify-items: center; }
         .tubo-ind { width: 28px; height: 28px; border: 2px solid #2b4c7e; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; background: white; color: #8b5a2b; }
 
-        /* Estilo especial para el texto libre y (0,0) */
-        .texto-libre { font-size: 18px; font-weight: bold; color: #000; padding: 4px 8px; border: 1px dashed transparent; }
+        .texto-libre { font-size: 18px; font-weight: bold; color: #000; padding: 4px 8px; }
         .texto-libre.cables-totales { color: #d32f2f; }
     </style>
 </head>
@@ -74,7 +69,11 @@
         <button id="btn-add-texto">+ Texto / Nota</button>
     </div>
 
-    <!-- Menú inferior de Conductos -->
+    <div class="herramientas">
+        <button id="btn-zoom-out">➖ Zoom</button>
+        <button id="btn-zoom-in">➕ Zoom</button>
+    </div>
+
     <div id="modal-opciones">
         <div class="modal-content">
             <h3>Seleccionar Conducto</h3>
@@ -89,9 +88,9 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const arquetaId = urlParams.get('arqueta') || "SIN_ID";
-
         let estadoLienzo = { id_arqueta: arquetaId, caras: { 1: [], 2: [], 3: [], 4: [] } };
         let caraActual = 1;
+        let elementoSeleccionado = null;
         const lienzo = document.getElementById('lienzo');
 
         const opcionesPredefinidas = [
@@ -102,7 +101,37 @@
 
         function inicializar() { renderizarListaConductos(); actualizarVistaCara(); }
 
+        function seleccionarElemento(el) {
+            if(elementoSeleccionado) elementoSeleccionado.classList.remove('selected');
+            elementoSeleccionado = el;
+            if(el) el.classList.add('selected');
+        }
+
+        lienzo.addEventListener('click', (e) => {
+            if(e.target === lienzo) seleccionarElemento(null);
+        });
+
+        function cambiarZoomManual(delta) {
+            if(!elementoSeleccionado) return;
+            let el = elementoSeleccionado;
+            let x = parseFloat(el.getAttribute('data-x')) || 0;
+            let y = parseFloat(el.getAttribute('data-y')) || 0;
+            let rot = el.getAttribute('data-rotacion') || 0;
+            let scale = parseFloat(el.getAttribute('data-scale')) || 1;
+
+            scale += delta;
+            if (scale < 0.4) scale = 0.4;
+            if (scale > 3) scale = 3;
+
+            el.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg) scale(${scale})`;
+            el.setAttribute('data-scale', scale);
+        }
+
+        document.getElementById('btn-zoom-in').addEventListener('click', () => cambiarZoomManual(0.1));
+        document.getElementById('btn-zoom-out').addEventListener('click', () => cambiarZoomManual(-0.1));
+
         function actualizarVistaCara() {
+            seleccionarElemento(null);
             document.getElementById('titulo-cara').innerText = `Cara ${caraActual} / 4`;
             lienzo.style.backgroundImage = `url('plantilla_cara${caraActual}.png')`;
             
@@ -148,7 +177,6 @@
             if(texto) crearElementoEnDOM('texto', texto, 100, 100, 0, 0, 0, 1);
         });
 
-        // NUEVO: Añadido atributo "escala" (scale) al crear elementos
         function crearElementoEnDOM(tipo, texto, x, y, prisma, diametro, rotacion, escala) {
             const div = document.createElement('div');
             div.className = 'elemento-draggable';
@@ -162,6 +190,11 @@
             div.setAttribute('data-scale', escala);
 
             div.style.transform = `translate(${x}px, ${y}px) rotate(${rotacion}deg) scale(${escala})`;
+
+            div.addEventListener('click', function(e) {
+                seleccionarElemento(this);
+                e.stopPropagation();
+            });
 
             if(tipo === 'conducto') {
                 let cols = prisma > 3 ? 2 : prisma; 
@@ -186,7 +219,7 @@
                 let cl = tipo === 'cables' ? 'texto-libre cables-totales' : 'texto-libre';
                 div.innerHTML = `<div class="${cl}">${texto}</div>`;
                 
-                div.addEventListener('click', function(e) {
+                div.addEventListener('dblclick', function(e) {
                     let actual = this.innerText;
                     let msg = tipo === 'cables' ? "Actualizar Cables Totales:" : "Editar nota:";
                     let nuevo = prompt(msg, actual);
@@ -194,14 +227,15 @@
                 });
             }
             lienzo.appendChild(div);
+            seleccionarElemento(div);
         }
 
-        // NUEVO: Añadida la función gesturable para Zoom con dos dedos
         interact('.elemento-draggable')
             .draggable({
                 inertia: true,
                 modifiers: [ interact.modifiers.restrictRect({ restriction: 'parent', endOnly: true }) ],
                 listeners: {
+                    start(event) { seleccionarElemento(event.target); },
                     move (event) {
                         let target = event.target;
                         let x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
@@ -217,6 +251,7 @@
             })
             .gesturable({
                 listeners: {
+                    start(event) { seleccionarElemento(event.target); },
                     move (event) {
                         let target = event.target;
                         let x = parseFloat(target.getAttribute('data-x')) || 0;
@@ -224,10 +259,7 @@
                         let rot = target.getAttribute('data-rotacion') || 0;
                         let scale = parseFloat(target.getAttribute('data-scale')) || 1;
 
-                        // Modificar la escala con el gesto de pellizcar (pinch)
                         scale += event.ds;
-
-                        // Límites de Zoom (0.4 mínimo, 3x máximo)
                         if (scale < 0.4) scale = 0.4;
                         if (scale > 3) scale = 3;
 
@@ -238,8 +270,7 @@
             });
 
         document.getElementById('btn-guardar').addEventListener('click', () => {
-            // 1. PEGA AQUÍ TU URL DE APPS SCRIPT
-            const urlScript = "https://script.google.com/macros/s/AKfycbxV_e2__0A4icbrya5ErahfhCyNB4VWcRysKVubANKWZj83kgav2aGNIovUOejmzHL7/exec";
+            const urlScript = "https://script.google.com/macros/s/AKfycbxV_e2__0A4icbrya5ErahfhCyNB4VWcRysKVubANKWZj83kgav2aGNIovUOejmzHL7/exec"; 
 
             for(let i=1; i<=4; i++) estadoLienzo.caras[i] = [];
 
@@ -253,7 +284,7 @@
                     x: el.getAttribute('data-x'),
                     y: el.getAttribute('data-y'),
                     rotacion: el.getAttribute('data-rotacion'),
-                    escala: el.getAttribute('data-scale') // NUEVO: Guardamos la escala actual
+                    escala: el.getAttribute('data-scale')
                 });
             });
 
