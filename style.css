@@ -9,12 +9,13 @@ header { display: flex; justify-content: space-between; padding: 10px; backgroun
     width: 100vw;
     height: 60vh;
     background-color: white;
-    background-image: url('plantilla_cara1.png');
+    /* Las dos líneas clave para que no se corte: */
     background-size: contain;
-    background-position: center;
+    background-position: top center;
     background-repeat: no-repeat;
-    position: relative; /* Clave para posicionar elementos dentro */
+    position: relative;
     border-bottom: 2px solid #ccc;
+    touch-action: none;
 }
 
 .controles { display: flex; justify-content: space-around; padding: 15px; }
