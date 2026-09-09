@@ -302,23 +302,23 @@
         document.getElementById('btn-rotar-izq').addEventListener('click', () => cambiarRotacionManual(-90));
         document.getElementById('btn-rotar-der').addEventListener('click', () => cambiarRotacionManual(90));
 
-        // CENTRADO EXACTO DE LOS (0,0) DENTRO DE CADA CAJETÍN REAL
+        // POSICIONAMIENTO FINO Y CENTRADO DE CADA CAJETÍN REAL
         function asegurarCablesTotalesCruz() {
             const rect = lienzo.getBoundingClientRect();
             const w = rect.width || 300;
             const h = rect.height || 300;
 
-            // CARA A: Centrado en el cajetín horizontal superior
-            crearElementoEnDOM('cables', '(0,0)', w * 0.44, h * 0.125, 0, 0, 0, 1, 0, 'A');
+            // CARA A: Un poco más arriba dentro del cajetín superior
+            crearElementoEnDOM('cables', '(0,0)', w * 0.44, h * 0.085, 0, 0, 0, 1, 0, 'A');
             
-            // CARA B: Centrado en el cajetín vertical derecho (Rotado 90deg)
-            crearElementoEnDOM('cables', '(0,0)', w * 0.81, h * 0.47, 0, 0, 90, 1, 0, 'B'); 
+            // CARA B: Un poco más abajo y a la izquierda dentro del cajetín vertical derecho
+            crearElementoEnDOM('cables', '(0,0)', w * 0.77, h * 0.49, 0, 0, 90, 1, 0, 'B'); 
             
-            // CARA C: Centrado en el cajetín horizontal inferior
-            crearElementoEnDOM('cables', '(0,0)', w * 0.44, h * 0.825, 0, 0, 0, 1, 0, 'C'); 
+            // CARA C: Un poco más abajo dentro del cajetín inferior
+            crearElementoEnDOM('cables', '(0,0)', w * 0.44, h * 0.865, 0, 0, 0, 1, 0, 'C'); 
             
-            // CARA D: Centrado en el cajetín vertical izquierdo (Rotado 90deg)
-            crearElementoEnDOM('cables', '(0,0)', w * 0.12, h * 0.47, 0, 0, 90, 1, 0, 'D'); 
+            // CARA D: Un poco más abajo dentro del cajetín vertical izquierdo
+            crearElementoEnDOM('cables', '(0,0)', w * 0.12, h * 0.49, 0, 0, 90, 1, 0, 'D'); 
 
             seleccionarElemento(null);
         }
