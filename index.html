@@ -298,23 +298,23 @@
         document.getElementById('btn-rotar-izq').addEventListener('click', () => cambiarRotacionManual(-90));
         document.getElementById('btn-rotar-der').addEventListener('click', () => cambiarRotacionManual(90));
 
-        // AJUSTE FINO DE POSICIONES
+        // COORDENADAS PERFECTAMENTE AJUSTADAS A CADA RECUADRO REAL
         function asegurarCablesTotalesCruz() {
             const rect = lienzo.getBoundingClientRect();
             const w = rect.width || 300;
             const h = rect.height || 300;
 
-            // CARA A: Arriba
-            crearElementoEnDOM('cables', '(0,0)', w * 0.44, h * 0.06, 0, 0, 0, 1, 0, 'A');
+            // CARA A: Centrada en la franja blanca debajo de CARA A
+            crearElementoEnDOM('cables', '(0,0)', w * 0.44, h * 0.115, 0, 0, 0, 1, 0, 'A');
             
-            // CARA B: Derecha rotado 90°
-            crearElementoEnDOM('cables', '(0,0)', w * 0.78, h * 0.50, 0, 0, 90, 1, 0, 'B'); 
+            // CARA B: Centrada en el recuadro vertical derecho
+            crearElementoEnDOM('cables', '(0,0)', w * 0.755, h * 0.50, 0, 0, 90, 1, 0, 'B'); 
             
-            // CARA C: Abajo
+            // CARA C: Centrada en la franja blanca encima de CARA C
             crearElementoEnDOM('cables', '(0,0)', w * 0.44, h * 0.88, 0, 0, 0, 1, 0, 'C'); 
             
-            // CARA D: Izquierda rotado 90°
-            crearElementoEnDOM('cables', '(0,0)', w * 0.14, h * 0.50, 0, 0, 90, 1, 0, 'D'); 
+            // CARA D: Centrada en el recuadro vertical izquierdo
+            crearElementoEnDOM('cables', '(0,0)', w * 0.12, h * 0.50, 0, 0, 90, 1, 0, 'D'); 
 
             seleccionarElemento(null);
         }
