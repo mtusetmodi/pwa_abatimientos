@@ -298,15 +298,22 @@
         document.getElementById('btn-rotar-izq').addEventListener('click', () => cambiarRotacionManual(-90));
         document.getElementById('btn-rotar-der').addEventListener('click', () => cambiarRotacionManual(90));
 
-        // CARA A RESTABLECIDA A 0.095 PARA VOLVER A CENTRARLA
+        // CENTRADO EXACTO DE LOS (0,0) DENTRO DE LOS RECUADROS
         function asegurarCablesTotalesCruz() {
             const rect = lienzo.getBoundingClientRect();
             const w = rect.width || 300;
             const h = rect.height || 300;
 
-            crearElementoEnDOM('cables', '(0,0)', w * 0.44, h * 0.095, 0, 0, 0, 1, 0, 'A');
+            // CARA A: Ajustado a 0.125 para centrar en su casilla
+            crearElementoEnDOM('cables', '(0,0)', w * 0.44, h * 0.125, 0, 0, 0, 1, 0, 'A');
+            
+            // CARA B: Derecha
             crearElementoEnDOM('cables', '(0,0)', w * 0.785, h * 0.50, 0, 0, 90, 1, 0, 'B'); 
-            crearElementoEnDOM('cables', '(0,0)', w * 0.44, h * 0.88, 0, 0, 0, 1, 0, 'C'); 
+            
+            // CARA C: Ajustado a 0.855 para centrar en su casilla
+            crearElementoEnDOM('cables', '(0,0)', w * 0.44, h * 0.855, 0, 0, 0, 1, 0, 'C'); 
+            
+            // CARA D: Izquierda
             crearElementoEnDOM('cables', '(0,0)', w * 0.12, h * 0.50, 0, 0, 90, 1, 0, 'D'); 
 
             seleccionarElemento(null);
