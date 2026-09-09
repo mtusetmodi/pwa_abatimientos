@@ -134,21 +134,23 @@
             cargarDatosGuardados();
         }
 
-        // Determinar automáticamente qué cara (A, B, C o D) corresponde a cada posición de la pantalla
+        // ZONIFICACIÓN EXACTA EN PORCENTAJES SOBRE EL LIENZO
         function calcularCaraPWA(x, y) {
             const rect = lienzo.getBoundingClientRect();
-            const centroX = rect.width / 2;
-            const centroY = rect.height / 2;
+            const w = rect.width || 300;
+            const h = rect.height || 300;
 
-            const relX = x - centroX;
-            const relY = y - centroY;
+            const posX = x / w; // % Horizontal (0.0 a 1.0)
+            const posY = y / h; // % Vertical (0.0 a 1.0)
 
-            // División por cuadrantes diagonales
-            if (Math.abs(relX) > Math.abs(relY)) {
-                return relX > 0 ? 'B' : 'D'; // Derecha -> B, Izquierda -> D
-            } else {
-                return relY < 0 ? 'A' : 'C'; // Arriba -> A, Abajo -> C
-            }
+            // Zonas prioritarias para brazos de la cruz
+            if (posY < 0.38) return 'A'; // Zona Superior (Cara A)
+            if (posY > 0.62) return 'C'; // Zona Inferior (Cara C)
+            if (posX > 0.60) return 'B'; // Zona Derecha (Cara B)
+            if (posX < 0.40) return 'D'; // Zona Izquierda (Cara D)
+
+            // En el centro exacto: según la inclinación
+            return posY < 0.5 ? 'A' : 'C';
         }
 
         function cargarDatosGuardados() {
@@ -250,13 +252,13 @@
 
         function asegurarCablesTotalesCruz() {
             const rect = lienzo.getBoundingClientRect();
-            const cX = rect.width > 0 ? rect.width / 2 - 25 : 150;
-            const cY = rect.height > 0 ? rect.height / 2 - 15 : 150;
+            const w = rect.width || 300;
+            const h = rect.height || 300;
 
-            crearElementoEnDOM('cables', '(0,0)', cX, 20, 0, 0, 0, 1, 0);               // Cara A
-            crearElementoEnDOM('cables', '(0,0)', rect.width - 70 || 260, cY, 0, 0, 0, 1, 0); // Cara B
-            crearElementoEnDOM('cables', '(0,0)', cX, rect.height - 40 || 310, 0, 0, 0, 1, 0);// Cara C
-            crearElementoEnDOM('cables', '(0,0)', 20, cY, 0, 0, 0, 1, 0);               // Cara D
+            crearElementoEnDOM('cables', '(0,0)', w * 0.45, h * 0.08, 0, 0, 0, 1, 0); // Cara A
+            crearElementoEnDOM('cables', '(0,0)', w * 0.78, h * 0.48, 0, 0, 0, 1, 0); // Cara B
+            crearElementoEnDOM('cables', '(0,0)', w * 0.45, h * 0.88, 0, 0, 0, 1, 0); // Cara C
+            crearElementoEnDOM('cables', '(0,0)', w * 0.08, h * 0.48, 0, 0, 0, 1, 0); // Cara D
             seleccionarElemento(null);
         }
 
@@ -417,7 +419,6 @@
                 let posX = parseFloat(el.getAttribute('data-x')) || 0;
                 let posY = parseFloat(el.getAttribute('data-y')) || 0;
                 
-                // Calculamos la Cara directamente en la PWA
                 let caraCalculada = calcularCaraPWA(posX, posY);
 
                 estadoLienzo.elementos.push({
@@ -428,7 +429,7 @@
                     cols: el.getAttribute('data-cols'),
                     x: posX,
                     y: posY,
-                    cara: caraCalculada, // ENVIAMOS LA CARA CALCULADA
+                    cara: caraCalculada,
                     rotacion: el.getAttribute('data-rotacion'),
                     escala: el.getAttribute('data-scale')
                 });
