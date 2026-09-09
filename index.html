@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Abatimiento Completo</title>
     <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+    <!-- Librería para capturar el lienzo como imagen PNG -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         * { box-sizing: border-box; font-family: Arial, sans-serif; user-select: none; }
         body { margin: 0; padding: 0; background-color: #e9ecef; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
@@ -145,7 +147,7 @@
 
         document.getElementById('titulo-app').innerText = "Arqueta: " + arquetaId;
 
-        let estadoLienzo = { id_arqueta: arquetaId, elementos: [] };
+        let estadoLienzo = { id_arqueta: arquetaId, elementos: [], imagen_base64: "" };
         const lienzo = document.getElementById('lienzo');
 
         let elementosSeleccionados = new Set();
@@ -298,22 +300,14 @@
         document.getElementById('btn-rotar-izq').addEventListener('click', () => cambiarRotacionManual(-90));
         document.getElementById('btn-rotar-der').addEventListener('click', () => cambiarRotacionManual(90));
 
-        // CARA A SUBIDA A 0.095 PARA QUE QUEDE PERFECTAMENTE CENTRADA
         function asegurarCablesTotalesCruz() {
             const rect = lienzo.getBoundingClientRect();
             const w = rect.width || 300;
             const h = rect.height || 300;
 
-            // CARA A: Subido a 0.095
             crearElementoEnDOM('cables', '(0,0)', w * 0.44, h * 0.095, 0, 0, 0, 1, 0, 'A');
-            
-            // CARA B: Derecha
             crearElementoEnDOM('cables', '(0,0)', w * 0.785, h * 0.50, 0, 0, 90, 1, 0, 'B'); 
-            
-            // CARA C: Abajo
             crearElementoEnDOM('cables', '(0,0)', w * 0.44, h * 0.88, 0, 0, 0, 1, 0, 'C'); 
-            
-            // CARA D: Izquierda
             crearElementoEnDOM('cables', '(0,0)', w * 0.12, h * 0.50, 0, 0, 90, 1, 0, 'D'); 
 
             seleccionarElemento(null);
@@ -480,38 +474,49 @@
                 }
             });
 
+        // CAPTURA VISUAL DE LA IMAGEN CON HTML2CANVAS
         document.getElementById('btn-guardar').addEventListener('click', () => {
-            estadoLienzo.elementos = [];
-
-            document.querySelectorAll('.elemento-draggable').forEach(el => {
-                estadoLienzo.elementos.push({
-                    tipo: el.getAttribute('data-tipo'),
-                    texto: el.innerText.split('\n')[0],
-                    prisma: el.getAttribute('data-prisma'),
-                    diametro: el.getAttribute('data-diametro'),
-                    cols: el.getAttribute('data-cols'),
-                    x: el.getAttribute('data-x'),
-                    y: el.getAttribute('data-y'),
-                    cara: el.getAttribute('data-cara') || 'A',
-                    rotacion: el.getAttribute('data-rotacion'),
-                    escala: el.getAttribute('data-scale')
-                });
-            });
-
             let btn = document.getElementById('btn-guardar');
-            btn.innerText = "Guardando...";
+            btn.innerText = "Capturando...";
 
-            fetch(urlScript, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(estadoLienzo)
-            }).then(() => {
-                alert("¡Abatimiento guardado correctamente!");
-                btn.innerText = "GUARDAR";
-            }).catch(err => {
-                alert("Error de conexión al guardar.");
-                btn.innerText = "GUARDAR";
+            // Deseleccionar temporalmente para no incluir bordes azules en la foto
+            seleccionarElemento(null);
+
+            html2canvas(lienzo, { useCORS: true, scale: 2 }).then(canvas => {
+                let imagenBase64 = canvas.toDataURL("image/png");
+
+                estadoLienzo.elementos = [];
+                estadoLienzo.imagen_base64 = imagenBase64;
+
+                document.querySelectorAll('.elemento-draggable').forEach(el => {
+                    estadoLienzo.elementos.push({
+                        tipo: el.getAttribute('data-tipo'),
+                        texto: el.innerText.split('\n')[0],
+                        prisma: el.getAttribute('data-prisma'),
+                        diametro: el.getAttribute('data-diametro'),
+                        cols: el.getAttribute('data-cols'),
+                        x: el.getAttribute('data-x'),
+                        y: el.getAttribute('data-y'),
+                        cara: el.getAttribute('data-cara') || 'A',
+                        rotacion: el.getAttribute('data-rotacion'),
+                        escala: el.getAttribute('data-scale')
+                    });
+                });
+
+                btn.innerText = "Guardando...";
+
+                fetch(urlScript, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(estadoLienzo)
+                }).then(() => {
+                    alert("¡Abatimiento e imagen guardados correctamente!");
+                    btn.innerText = "GUARDAR";
+                }).catch(err => {
+                    alert("Error de conexión al guardar.");
+                    btn.innerText = "GUARDAR";
+                });
             });
         });
 
