@@ -12,7 +12,6 @@
         header h2 { margin: 0; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 65vw; }
         #btn-guardar { background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; font-size: 15px;}
         
-        /* Contenedor principal ajustado para centrar la cruz en cualquier pantalla */
         #contenedor-lienzo {
             width: 100vw;
             max-width: 500px;
@@ -149,20 +148,27 @@
             cargarDatosGuardados();
         }
 
-        // CÁLCULO PRECISO DE CARAS EN BASE AL CENTRO DE LA CRUZ
+        // ZONIFICACIÓN MATEMÁTICA INFALIBLE POR CUADRANTES
         function calcularCaraPWA(x, y) {
             const rect = lienzo.getBoundingClientRect();
             const w = rect.width || 300;
             const h = rect.height || 300;
 
-            const relX = x - (w / 2);
-            const relY = y - (h / 2);
+            const posX = x / w; // Proporción Horizontal (0.0 a 1.0)
+            const posY = y / h; // Proporción Vertical (0.0 a 1.0)
 
-            // Angulo respecto al centro exacto de la cruz
-            if (Math.abs(relX) > Math.abs(relY)) {
-                return relX > 0 ? 'B' : 'D'; // Derecha -> B | Izquierda -> D
+            // 1. ZONA SUPERIOR (CARA A)
+            if (posY < 0.35) return 'A';
+
+            // 2. ZONA INFERIOR (CARA C)
+            if (posY > 0.65) return 'C';
+
+            // 3. ZONA CENTRAL HORIZONTAL (35% a 65% de altura)
+            // Si está en la mitad izquierda es CARA D, si está en la mitad derecha es CARA B
+            if (posX < 0.50) {
+                return 'D'; // Izquierda
             } else {
-                return relY < 0 ? 'A' : 'C'; // Arriba -> A | Abajo -> C
+                return 'B'; // Derecha
             }
         }
 
