@@ -57,7 +57,7 @@
         #btn-eliminar { background: #dc3545; } 
         #btn-eliminar:active { background: #c82333; }
         
-        #btn-lock-cables { background: #ffc107; color: #212529; font-weight: bold; }
+        #btn-lock-cables { background: #28a745; color: white; font-weight: bold; }
 
         #modal-opciones { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 100; align-items: flex-end; justify-content: center; }
         .modal-content { background: white; width: 100%; max-width: 500px; border-radius: 20px 20px 0 0; padding: 20px; max-height: 70vh; overflow-y: auto; }
@@ -108,7 +108,7 @@
     <div class="herramientas">
         <button id="btn-eliminar">🗑️ Eliminar</button>
         <button id="btn-multi">☐ Sel. Múltiple</button>
-        <button id="btn-lock-cables">🔒 Fijar (0,0)</button>
+        <button id="btn-lock-cables">🔒 Fijado (0,0)</button>
     </div>
 
     <div id="modal-opciones">
@@ -145,7 +145,7 @@
 
         let elementosSeleccionados = new Set();
         let modoSeleccionMultiple = false;
-        let cablesBloqueados = true; // Bloqueado por defecto para no moverlos sin querer
+        let cablesBloqueados = true;
 
         const opcionesPredefinidas = [
             { prisma: 1, diametro: 110, cols: 1, label: "1 ø 110" },
@@ -171,17 +171,15 @@
             actualizarEstadoBotonLock();
         }
 
-        // TOGGLE PARA BLOQUEAR / DESBLOQUEAR Y GUARDAR POSICIÓN GLOBAL DE (0,0)
         const btnLock = document.getElementById('btn-lock-cables');
         btnLock.addEventListener('click', () => {
             cablesBloqueados = !cablesBloqueados;
             
             if (cablesBloqueados) {
-                // Guardar la posición actual de los 4 elementos cables en localStorage
                 guardarPosicionesFijasCables();
                 mostrarBanner("🔒 Posiciones de (0,0) FIJADAS para todas las arquetas", "#28a745");
             } else {
-                mostrarBanner("🔓 (0,0) Desbloqueados: Mantenlos pulsados y muévelos a la posición deseada", "#ffc107");
+                mostrarBanner("🔓 (0,0) Desbloqueados: Muévelos a la posición deseada", "#ffc107");
             }
             actualizarEstadoBotonLock();
         });
@@ -306,7 +304,6 @@
 
         document.getElementById('btn-eliminar').addEventListener('click', () => {
             elementosSeleccionados.forEach(el => {
-                // No permitir eliminar los (0,0) base
                 if (el.getAttribute('data-tipo') !== 'cables') {
                     el.remove();
                 }
@@ -347,7 +344,7 @@
         document.getElementById('btn-rotar-izq').addEventListener('click', () => cambiarRotacionManual(-90));
         document.getElementById('btn-rotar-der').addEventListener('click', () => cambiarRotacionManual(90));
 
-        // CARGA POSICIONES FIJAS GUARDADAS O VALORES POR DEFECTO
+        // CARA D INVERTIDA A -90 GRADOS
         function asegurarCablesTotalesCruz() {
             const rect = lienzo.getBoundingClientRect();
             const w = rect.width || 300;
@@ -367,7 +364,8 @@
             crearElementoEnDOM('cables', '(0,0)', posA.x, posA.y, 0, 0, 0, 1, 0, 'A');
             crearElementoEnDOM('cables', '(0,0)', posB.x, posB.y, 0, 0, 90, 1, 0, 'B'); 
             crearElementoEnDOM('cables', '(0,0)', posC.x, posC.y, 0, 0, 0, 1, 0, 'C'); 
-            crearElementoEnDOM('cables', '(0,0)', posD.x, posD.y, 0, 0, 90, 1, 0, 'D'); 
+            // CARA D: Rotación cambiada a -90 para orientar el texto hacia arriba
+            crearElementoEnDOM('cables', '(0,0)', posD.x, posD.y, 0, 0, -90, 1, 0, 'D'); 
 
             seleccionarElemento(null);
         }
@@ -484,7 +482,6 @@
             }
         }
 
-        // INTERRUPCIÓN DE ARRASTRE SI CABLES ESTÁ BLOQUEADO
         interact('.elemento-draggable')
             .draggable({
                 inertia: true,
@@ -495,7 +492,6 @@
                     },
                     move (event) {
                         elementosSeleccionados.forEach(el => {
-                            // Si es de tipo 'cables' y están bloqueados, NO mover
                             if (el.getAttribute('data-tipo') === 'cables' && cablesBloqueados) {
                                 return;
                             }
