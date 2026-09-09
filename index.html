@@ -29,7 +29,7 @@
         .controles button { padding: 12px; font-size: 16px; background: #007bff; color: white; border: none; border-radius: 8px; width: 45%; font-weight: bold;}
         
         .herramientas { display: flex; justify-content: space-between; gap: 5px; padding: 8px 10px; background: #f8f9fa; border-top: 1px solid #ddd; }
-        .herramientas button { flex: 1; padding: 10px 5px; font-size: 16px; background: #6c757d; color: white; border: none; border-radius: 8px; font-weight: bold; text-align: center;}
+        .herramientas button { flex: 1; padding: 10px 5px; font-size: 15px; background: #6c757d; color: white; border: none; border-radius: 8px; font-weight: bold; text-align: center;}
         .herramientas button:active { background: #5a6268; }
         
         #btn-eliminar { background: #dc3545; } 
@@ -38,8 +38,9 @@
         #modal-opciones { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 100; align-items: flex-end; }
         .modal-content { background: white; width: 100%; border-radius: 20px 20px 0 0; padding: 20px; max-height: 70vh; overflow-y: auto; }
         .modal-content h3 { margin-top: 0; border-bottom: 2px solid #dc3545; padding-bottom: 10px; color: #dc3545; }
-        .opcion-lista { padding: 15px; border-bottom: 1px solid #eee; font-size: 18px; display: flex; align-items: center; gap: 10px; }
-        
+        .opcion-lista { padding: 15px; border-bottom: 1px solid #eee; font-size: 16px; display: flex; align-items: center; justify-content: space-between; }
+        .opcion-info { display: flex; align-items: center; gap: 10px; }
+
         .elemento-draggable {
             position: absolute; display: flex; flex-direction: column; align-items: center;
             padding: 4px; background: transparent; touch-action: none; cursor: grab;
@@ -79,12 +80,13 @@
     
     <div class="herramientas">
         <button id="btn-eliminar">🗑️ Eliminar</button>
+
         <button id="btn-multi">☐ Sel. Múltiple</button>
     </div>
 
     <div id="modal-opciones">
         <div class="modal-content">
-            <h3>Seleccionar Conducto</h3>
+            <h3>Seleccionar Conducto y Formato</h3>
             <div id="lista-conductos"></div>
             <div class="opcion-lista" style="color:#007bff; font-weight:bold;" onclick="abrirPersonalizado()">
                 + Crear Personalizado...
@@ -102,10 +104,22 @@
         let elementosSeleccionados = new Set();
         let modoSeleccionMultiple = false;
 
+        // Opciones con definición de columnas explícita (p. ej. 6 tubos en 2x3 o 3x2)
         const opcionesPredefinidas = [
-            { prisma: 1, diametro: 110 }, { prisma: 2, diametro: 110 }, { prisma: 4, diametro: 110 }, { prisma: 6, diametro: 110 },
-            { prisma: 1, diametro: 125 }, { prisma: 2, diametro: 125 }, { prisma: 4, diametro: 125 }, { prisma: 6, diametro: 125 },
-            { prisma: 2, diametro: 100 }, { prisma: 5, diametro: 200 }
+            { prisma: 1, diametro: 110, cols: 1, label: "1 ø 110" },
+            { prisma: 2, diametro: 110, cols: 2, label: "2 ø 110 (2x1)" },
+            { prisma: 4, diametro: 110, cols: 2, label: "4 ø 110 (2x2)" },
+            { prisma: 4, diametro: 110, cols: 4, label: "4 ø 110 (4x1 en línea)" },
+            { prisma: 6, diametro: 110, cols: 2, label: "6 ø 110 (2 cols x 3 filas)" },
+            { prisma: 6, diametro: 110, cols: 3, label: "6 ø 110 (3 cols x 2 filas)" },
+            { prisma: 1, diametro: 125, cols: 1, label: "1 ø 125" },
+            { prisma: 2, diametro: 125, cols: 2, label: "2 ø 125 (2x1)" },
+            { prisma: 4, diametro: 125, cols: 2, label: "4 ø 125 (2x2)" },
+            { prisma: 4, diametro: 125, cols: 4, label: "4 ø 125 (4x1 en línea)" },
+            { prisma: 6, diametro: 125, cols: 2, label: "6 ø 125 (2 cols x 3 filas)" },
+            { prisma: 6, diametro: 125, cols: 3, label: "6 ø 125 (3 cols x 2 filas)" },
+            { prisma: 2, diametro: 100, cols: 2, label: "2 ø 100" },
+            { prisma: 5, diametro: 200, cols: 2, label: "5 ø 200" }
         ];
 
         function inicializar() { 
@@ -186,18 +200,19 @@
         document.getElementById('btn-rotar-der').addEventListener('click', () => cambiarRotacionManual(90));
 
         function asegurarCablesTotalesCruz() {
-            crearElementoEnDOM('cables', '(0,0)', 150, 40, 0, 0, 0, 1);  
-            crearElementoEnDOM('cables', '(0,0)', 260, 170, 0, 0, 0, 1); 
-            crearElementoEnDOM('cables', '(0,0)', 150, 310, 0, 0, 0, 1); 
-            crearElementoEnDOM('cables', '(0,0)', 40, 170, 0, 0, 0, 1);  
+            crearElementoEnDOM('cables', '(0,0)', 150, 40, 0, 0, 0, 1, 0);  
+            crearElementoEnDOM('cables', '(0,0)', 260, 170, 0, 0, 0, 1, 0); 
+            crearElementoEnDOM('cables', '(0,0)', 150, 310, 0, 0, 0, 1, 0); 
+            crearElementoEnDOM('cables', '(0,0)', 40, 170, 0, 0, 0, 1, 0);  
             seleccionarElemento(null);
         }
 
         function renderizarListaConductos() {
             let html = "";
-            opcionesPredefinidas.forEach(opc => {
-                html += `<div class="opcion-lista" onclick="seleccionarConducto(${opc.prisma}, ${opc.diametro})">
-                            <div class="circulo-ico"></div> ${opc.prisma} ø ${opc.diametro}
+            opcionesPredefinidas.forEach((opc, idx) => {
+                html += `<div class="opcion-lista" onclick="seleccionarConductoPorIndice(${idx})">
+                            <div class="opcion-info">○ ${opc.label}</div>
+                            <span style="font-size:12px; color:#6c757d;">Elegir</span>
                          </div>`;
             });
             document.getElementById('lista-conductos').innerHTML = html;
@@ -206,21 +221,48 @@
         document.getElementById('btn-add-conducto').addEventListener('click', () => { document.getElementById('modal-opciones').style.display = 'flex'; });
         function cerrarModal() { document.getElementById('modal-opciones').style.display = 'none'; }
 
-        function seleccionarConducto(prisma, diametro) { cerrarModal(); crearElementoEnDOM('conducto', '', 140, 180, prisma, diametro, 0, 1); }
+        function seleccionarConductoPorIndice(idx) {
+            cerrarModal();
+            let opc = opcionesPredefinidas[idx];
+            crearElementoEnDOM('conducto', '', 140, 180, opc.prisma, opc.diametro, 0, 1, opc.cols);
+        }
 
         function abrirPersonalizado() {
             cerrarModal();
             let p = prompt("Nº de Tubos (Prisma):");
             let d = prompt("Diámetro:");
-            if(p && d) seleccionarConducto(parseInt(p), d);
+            let c = prompt("Nº de Columnas (ej: 2 o 3):", "2");
+            if(p && d) crearElementoEnDOM('conducto', '', 140, 180, parseInt(p), d, 0, 1, parseInt(c || 2));
         }
 
         document.getElementById('btn-add-texto').addEventListener('click', () => {
             let texto = prompt("Escribe tu nota:");
-            if(texto) crearElementoEnDOM('texto', texto, 140, 180, 0, 0, 0, 1);
+            if(texto) crearElementoEnDOM('texto', texto, 140, 180, 0, 0, 0, 1, 0);
         });
 
-        function crearElementoEnDOM(tipo, texto, x, y, prisma, diametro, rotacion, escala) {
+        function renderizarTubosInternos(div, prisma, diametro, cols) {
+            prisma = parseInt(prisma);
+            cols = parseInt(cols) || (prisma > 3 ? 2 : prisma);
+
+            let filas = Math.ceil(prisma / cols);
+            let inner = `<div class="titulo-conducto">${prisma} ø${diametro}</div>`;
+            inner += `<div class="grid-tubos" style="grid-template-columns: repeat(${cols}, 1fr);">`;
+            
+            // Renderizado de abajo a arriba
+            for (let r = filas - 1; r >= 0; r--) {
+                for (let c = 0; c < cols; c++) {
+                    let num = r * cols + c + 1;
+                    if (num <= prisma) {
+                        inner += `<div class="tubo-ind">${num}</div>`;
+                    }
+                }
+            }
+            
+            inner += `</div>`;
+            div.innerHTML = inner;
+        }
+
+        function crearElementoEnDOM(tipo, texto, x, y, prisma, diametro, rotacion, escala, cols) {
             const div = document.createElement('div');
             div.className = 'elemento-draggable';
             div.setAttribute('data-x', x);
@@ -230,6 +272,7 @@
             div.setAttribute('data-diametro', diametro);
             div.setAttribute('data-rotacion', rotacion);
             div.setAttribute('data-scale', escala);
+            div.setAttribute('data-cols', cols || 2);
 
             div.style.transform = `translate(${x}px, ${y}px) rotate(${rotacion}deg) scale(${escala})`;
 
@@ -239,28 +282,9 @@
             });
 
             if(tipo === 'conducto') {
-                prisma = parseInt(prisma);
-                let cols = prisma > 3 ? 2 : prisma; 
-                if (prisma === 6) cols = 2; 
-                if (prisma === 5) cols = 2;
+                renderizarTubosInternos(div, prisma, diametro, cols);
 
-                let filas = Math.ceil(prisma / cols);
-                let inner = `<div class="titulo-conducto">${prisma} ø${diametro}</div>`;
-                inner += `<div class="grid-tubos" style="grid-template-columns: repeat(${cols}, 1fr);">`;
-                
-                // ORDENAR DE ABAJO A ARRIBA (Normativa)
-                for (let r = filas - 1; r >= 0; r--) {
-                    for (let c = 0; c < cols; c++) {
-                        let num = r * cols + c + 1;
-                        if (num <= prisma) {
-                            inner += `<div class="tubo-ind">${num}</div>`;
-                        }
-                    }
-                }
-                
-                inner += `</div>`;
-                div.innerHTML = inner;
-
+                // Doble clic rota 90 grados
                 div.addEventListener('dblclick', function(e) {
                     if (!elementosSeleccionados.has(this)) seleccionarElemento(this);
                     cambiarRotacionManual(90);
@@ -343,6 +367,7 @@
                     texto: el.innerText.split('\n')[0],
                     prisma: el.getAttribute('data-prisma'),
                     diametro: el.getAttribute('data-diametro'),
+                    cols: el.getAttribute('data-cols'),
                     x: el.getAttribute('data-x'),
                     y: el.getAttribute('data-y'),
                     rotacion: el.getAttribute('data-rotacion'),
