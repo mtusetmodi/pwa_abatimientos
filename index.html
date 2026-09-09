@@ -9,7 +9,7 @@
         * { box-sizing: border-box; font-family: Arial, sans-serif; user-select: none; }
         body { margin: 0; padding: 0; background-color: #e9ecef; overflow: hidden; }
         header { display: flex; justify-content: space-between; padding: 12px; background: #343a40; color: white; align-items: center; z-index: 10; position: relative;}
-        header h2 { margin: 0; font-size: 18px; }
+        header h2 { margin: 0; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 65vw; }
         #btn-guardar { background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; font-size: 15px;}
         
         #lienzo {
@@ -60,7 +60,7 @@
 </head>
 <body>
     <header>
-        <h2 id="titulo-app">Abatimiento General</h2>
+        <h2 id="titulo-app">Cargando...</h2>
         <button id="btn-guardar">GUARDAR</button>
     </header>
 
@@ -80,7 +80,6 @@
     
     <div class="herramientas">
         <button id="btn-eliminar">🗑️ Eliminar</button>
-
         <button id="btn-multi">☐ Sel. Múltiple</button>
     </div>
 
@@ -96,15 +95,24 @@
     </div>
 
     <script>
+        const urlScript = "https://script.google.com/macros/s/AKfycbxV_e2__0A4icbrya5ErahfhCyNB4VWcRysKVubANKWZj83kgav2aGNIovUOejmzHL7/exec"; 
+
+        // Limpieza del parámetro arqueta por si viene con basura de URL
         const urlParams = new URLSearchParams(window.location.search);
-        const arquetaId = urlParams.get('arqueta') || "SIN_ID";
+        let rawArqueta = urlParams.get('arqueta') || "SIN_ID";
+        if (rawArqueta.includes(')')) {
+            rawArqueta = rawArqueta.split(')').pop();
+        }
+        const arquetaId = rawArqueta.trim();
+
+        document.getElementById('titulo-app').innerText = "Arqueta: " + arquetaId;
+
         let estadoLienzo = { id_arqueta: arquetaId, elementos: [] };
         const lienzo = document.getElementById('lienzo');
 
         let elementosSeleccionados = new Set();
         let modoSeleccionMultiple = false;
 
-        // Opciones con definición de columnas explícita (p. ej. 6 tubos en 2x3 o 3x2)
         const opcionesPredefinidas = [
             { prisma: 1, diametro: 110, cols: 1, label: "1 ø 110" },
             { prisma: 2, diametro: 110, cols: 2, label: "2 ø 110 (2x1)" },
@@ -124,7 +132,33 @@
 
         function inicializar() { 
             renderizarListaConductos(); 
-            asegurarCablesTotalesCruz();
+            cargarDatosGuardados();
+        }
+
+        // CARGA AUTOMÁTICA DESDE GOOGLE SHEETS
+        function cargarDatosGuardados() {
+            if (arquetaId === "SIN_ID") {
+                asegurarCablesTotalesCruz();
+                return;
+            }
+
+            fetch(`${urlScript}?arqueta=${encodeURIComponent(arquetaId)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.elementos && data.elementos.length > 0) {
+                        lienzo.innerHTML = ""; // Limpiar lienzo
+                        data.elementos.forEach(el => {
+                            crearElementoEnDOM(el.tipo, el.texto, parseFloat(el.x), parseFloat(el.y), parseInt(el.prisma), el.diametro, parseFloat(el.rotacion), parseFloat(el.escala), parseInt(el.cols));
+                        });
+                        seleccionarElemento(null);
+                    } else {
+                        asegurarCablesTotalesCruz();
+                    }
+                })
+                .catch(err => {
+                    console.error("Error al cargar datos:", err);
+                    asegurarCablesTotalesCruz();
+                });
         }
 
         function seleccionarElemento(el) {
@@ -248,7 +282,6 @@
             let inner = `<div class="titulo-conducto">${prisma} ø${diametro}</div>`;
             inner += `<div class="grid-tubos" style="grid-template-columns: repeat(${cols}, 1fr);">`;
             
-            // Renderizado de abajo a arriba
             for (let r = filas - 1; r >= 0; r--) {
                 for (let c = 0; c < cols; c++) {
                     let num = r * cols + c + 1;
@@ -284,7 +317,6 @@
             if(tipo === 'conducto') {
                 renderizarTubosInternos(div, prisma, diametro, cols);
 
-                // Doble clic rota 90 grados
                 div.addEventListener('dblclick', function(e) {
                     if (!elementosSeleccionados.has(this)) seleccionarElemento(this);
                     cambiarRotacionManual(90);
@@ -357,8 +389,6 @@
             });
 
         document.getElementById('btn-guardar').addEventListener('click', () => {
-            const urlScript = "https://script.google.com/macros/s/AKfycbxV_e2__0A4icbrya5ErahfhCyNB4VWcRysKVubANKWZj83kgav2aGNIovUOejmzHL7/exec"; 
-
             estadoLienzo.elementos = [];
 
             document.querySelectorAll('.elemento-draggable').forEach(el => {
