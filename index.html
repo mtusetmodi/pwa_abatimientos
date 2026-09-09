@@ -41,17 +41,23 @@
         .controles button { padding: 10px; font-size: 15px; background: #007bff; color: white; border: none; border-radius: 8px; width: 48%; font-weight: bold;}
         
         .herramientas { width: 100%; max-width: 500px; display: flex; justify-content: space-between; gap: 5px; padding: 6px 10px; background: #f8f9fa; border-top: 1px solid #ddd; }
-        .herramientas button { flex: 1; padding: 8px 4px; font-size: 14px; background: #6c757d; color: white; border: none; border-radius: 8px; font-weight: bold; text-align: center;}
+        .herramientas button { flex: 1; padding: 8px 4px; font-size: 13px; background: #6c757d; color: white; border: none; border-radius: 8px; font-weight: bold; text-align: center;}
         .herramientas button:active { background: #5a6268; }
         
         #btn-eliminar { background: #dc3545; } 
         #btn-eliminar:active { background: #c82333; }
 
+        #panel-cara {
+            width: 100%; max-width: 500px; background: #fff3cd; color: #856404; padding: 6px 12px;
+            display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 14px;
+            border-bottom: 1px solid #ffeeba;
+        }
+        #panel-cara select { padding: 4px 8px; font-size: 14px; font-weight: bold; border-radius: 4px; }
+
         #modal-opciones { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 100; align-items: flex-end; justify-content: center; }
         .modal-content { background: white; width: 100%; max-width: 500px; border-radius: 20px 20px 0 0; padding: 20px; max-height: 70vh; overflow-y: auto; }
         .modal-content h3 { margin-top: 0; border-bottom: 2px solid #dc3545; padding-bottom: 10px; color: #dc3545; }
         .opcion-lista { padding: 15px; border-bottom: 1px solid #eee; font-size: 16px; display: flex; align-items: center; justify-content: space-between; }
-        .opcion-info { display: flex; align-items: center; gap: 10px; }
 
         .elemento-draggable {
             position: absolute; display: flex; flex-direction: column; align-items: center;
@@ -60,6 +66,8 @@
         }
         
         .elemento-draggable.selected { border-color: #007bff; box-shadow: 0 0 10px rgba(0,123,255,0.5); background: rgba(255, 255, 255, 0.4); z-index: 50;}
+
+        .badge-cara { position: absolute; top: -10px; right: -10px; background: #007bff; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
 
         .titulo-conducto { font-weight: bold; font-size: 13px; margin-bottom: 2px; color: #000; text-align: center; }
         .grid-tubos { display: grid; gap: 2px; justify-items: center; }
@@ -78,6 +86,17 @@
 
     <div id="contenedor-lienzo">
         <div id="lienzo"></div>
+    </div>
+
+    <!-- Panel de control directo de Cara para el elemento seleccionado -->
+    <div id="panel-cara">
+        <span>Asignación de Cara:</span>
+        <select id="select-cara-elemento" onchange="cambiarCaraSeleccionada(this.value)">
+            <option value="A">CARA A (Arriba)</option>
+            <option value="B">CARA B (Derecha)</option>
+            <option value="C">CARA C (Abajo)</option>
+            <option value="D">CARA D (Izquierda)</option>
+        </select>
     </div>
 
     <div class="controles">
@@ -148,34 +167,12 @@
             cargarDatosGuardados();
         }
 
-        // DETECCIÓN GEOMÉTRICA POR ÁNGULOS (TRIGONOMETRÍA EXACTA)
-        function calcularCaraDOM(el) {
-            const rectLienzo = lienzo.getBoundingClientRect();
-            const rectEl = el.getBoundingClientRect();
-
-            // Centro del elemento respecto al lienzo
-            const centroElX = (rectEl.left + rectEl.width / 2) - rectLienzo.left;
-            const centroElY = (rectEl.top + rectEl.height / 2) - rectLienzo.top;
-
-            // Centro geométrico del lienzo
-            const centroLienzoX = rectLienzo.width / 2;
-            const centroLienzoY = rectLienzo.height / 2;
-
-            const deltaX = centroElX - centroLienzoX;
-            const deltaY = centroElY - centroLienzoY;
-
-            // Ángulo en grados (-180 a +180)
-            const angulo = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
-
-            if (angulo >= -135 && angulo < -45) {
-                return 'A'; // Arriba (Norte)
-            } else if (angulo >= -45 && angulo < 45) {
-                return 'B'; // Derecha (Este)
-            } else if (angulo >= 45 && angulo < 135) {
-                return 'C'; // Abajo (Sur)
-            } else {
-                return 'D'; // Izquierda (Oeste)
-            }
+        function cambiarCaraSeleccionada(nuevaCara) {
+            elementosSeleccionados.forEach(el => {
+                el.setAttribute('data-cara', nuevaCara);
+                let badge = el.querySelector('.badge-cara');
+                if (badge) badge.innerText = nuevaCara;
+            });
         }
 
         function cargarDatosGuardados() {
@@ -190,7 +187,7 @@
                     if (data && data.elementos && data.elementos.length > 0) {
                         lienzo.innerHTML = "";
                         data.elementos.forEach(el => {
-                            crearElementoEnDOM(el.tipo, el.texto, parseFloat(el.x), parseFloat(el.y), parseInt(el.prisma), el.diametro, parseFloat(el.rotacion), parseFloat(el.escala), parseInt(el.cols));
+                            crearElementoEnDOM(el.tipo, el.texto, parseFloat(el.x), parseFloat(el.y), parseInt(el.prisma), el.diametro, parseFloat(el.rotacion), parseFloat(el.escala), parseInt(el.cols), el.cara);
                         });
                         seleccionarElemento(null);
                     } else {
@@ -224,6 +221,10 @@
                 el.classList.add('selected');
                 elementosSeleccionados.add(el);
             }
+
+            // Actualizar el selector de cara en pantalla con la del elemento pinchado
+            let caraActual = el.getAttribute('data-cara') || 'A';
+            document.getElementById('select-cara-elemento').value = caraActual;
         }
 
         lienzo.addEventListener('click', (e) => {
@@ -280,10 +281,10 @@
             const w = rect.width || 300;
             const h = rect.height || 300;
 
-            crearElementoEnDOM('cables', '(0,0)', w * 0.42, h * 0.10, 0, 0, 0, 1, 0); // Cara A
-            crearElementoEnDOM('cables', '(0,0)', w * 0.72, h * 0.48, 0, 0, 0, 1, 0); // Cara B
-            crearElementoEnDOM('cables', '(0,0)', w * 0.42, h * 0.84, 0, 0, 0, 1, 0); // Cara C
-            crearElementoEnDOM('cables', '(0,0)', w * 0.12, h * 0.48, 0, 0, 0, 1, 0); // Cara D
+            crearElementoEnDOM('cables', '(0,0)', w * 0.42, h * 0.10, 0, 0, 0, 1, 0, 'A'); // Cara A
+            crearElementoEnDOM('cables', '(0,0)', w * 0.72, h * 0.48, 0, 0, 0, 1, 0, 'B'); // Cara B
+            crearElementoEnDOM('cables', '(0,0)', w * 0.42, h * 0.84, 0, 0, 0, 1, 0, 'C'); // Cara C
+            crearElementoEnDOM('cables', '(0,0)', w * 0.12, h * 0.48, 0, 0, 0, 1, 0, 'D'); // Cara D
             seleccionarElemento(null);
         }
 
@@ -305,7 +306,8 @@
             cerrarModal();
             let opc = opcionesPredefinidas[idx];
             const rect = lienzo.getBoundingClientRect();
-            crearElementoEnDOM('conducto', '', rect.width/2 - 25, rect.height/2 - 25, opc.prisma, opc.diametro, 0, 1, opc.cols);
+            let caraActual = document.getElementById('select-cara-elemento').value || 'A';
+            crearElementoEnDOM('conducto', '', rect.width/2 - 25, rect.height/2 - 25, opc.prisma, opc.diametro, 0, 1, opc.cols, caraActual);
         }
 
         function abrirPersonalizado() {
@@ -314,13 +316,15 @@
             let d = prompt("Diámetro:");
             let c = prompt("Nº de Columnas (ej: 2 o 3):", "2");
             const rect = lienzo.getBoundingClientRect();
-            if(p && d) crearElementoEnDOM('conducto', '', rect.width/2 - 25, rect.height/2 - 25, parseInt(p), d, 0, 1, parseInt(c || 2));
+            let caraActual = document.getElementById('select-cara-elemento').value || 'A';
+            if(p && d) crearElementoEnDOM('conducto', '', rect.width/2 - 25, rect.height/2 - 25, parseInt(p), d, 0, 1, parseInt(c || 2), caraActual);
         }
 
         document.getElementById('btn-add-texto').addEventListener('click', () => {
             let texto = prompt("Escribe tu nota:");
             const rect = lienzo.getBoundingClientRect();
-            if(texto) crearElementoEnDOM('texto', texto, rect.width/2 - 25, rect.height/2 - 25, 0, 0, 0, 1, 0);
+            let caraActual = document.getElementById('select-cara-elemento').value || 'A';
+            if(texto) crearElementoEnDOM('texto', texto, rect.width/2 - 25, rect.height/2 - 25, 0, 0, 0, 1, 0, caraActual);
         });
 
         function renderizarTubosInternos(div, prisma, diametro, cols) {
@@ -344,7 +348,7 @@
             div.innerHTML = inner;
         }
 
-        function crearElementoEnDOM(tipo, texto, x, y, prisma, diametro, rotacion, escala, cols) {
+        function crearElementoEnDOM(tipo, texto, x, y, prisma, diametro, rotacion, escala, cols, cara) {
             const div = document.createElement('div');
             div.className = 'elemento-draggable';
             div.setAttribute('data-x', x);
@@ -355,6 +359,7 @@
             div.setAttribute('data-rotacion', rotacion);
             div.setAttribute('data-scale', escala);
             div.setAttribute('data-cols', cols || 2);
+            div.setAttribute('data-cara', cara || 'A');
 
             div.style.transform = `translate(${x}px, ${y}px) rotate(${rotacion}deg) scale(${escala})`;
 
@@ -382,6 +387,13 @@
                     if(nuevo !== null && nuevo.trim() !== "") this.querySelector('.texto-libre').innerText = nuevo;
                 });
             }
+
+            // Etiqueta distintiva de cara
+            let badge = document.createElement('div');
+            badge.className = 'badge-cara';
+            badge.innerText = cara || 'A';
+            div.appendChild(badge);
+
             lienzo.appendChild(div);
             
             if (!modoSeleccionMultiple) {
@@ -441,20 +453,15 @@
             estadoLienzo.elementos = [];
 
             document.querySelectorAll('.elemento-draggable').forEach(el => {
-                let posX = parseFloat(el.getAttribute('data-x')) || 0;
-                let posY = parseFloat(el.getAttribute('data-y')) || 0;
-                
-                let caraCalculada = calcularCaraDOM(el);
-
                 estadoLienzo.elementos.push({
                     tipo: el.getAttribute('data-tipo'),
                     texto: el.innerText.split('\n')[0],
                     prisma: el.getAttribute('data-prisma'),
                     diametro: el.getAttribute('data-diametro'),
                     cols: el.getAttribute('data-cols'),
-                    x: posX,
-                    y: posY,
-                    cara: caraCalculada,
+                    x: el.getAttribute('data-x'),
+                    y: el.getAttribute('data-y'),
+                    cara: el.getAttribute('data-cara') || 'A', // SE GUARDA LA CARA ASIGNADA EXPLÍCITA
                     rotacion: el.getAttribute('data-rotacion'),
                     escala: el.getAttribute('data-scale')
                 });
