@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Abatimiento Completo</title>
     
-    <!-- Enlace al Manifest para soporte PWA -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#343a40">
 
@@ -121,7 +120,6 @@
     </div>
 
     <script>
-        // REGISTRO DEL SERVICE WORKER PARA CARGA 100% OFFLINE
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./sw.js').then(() => {
                 console.log('Service Worker Registrado Exitosamente.');
@@ -300,6 +298,7 @@
         document.getElementById('btn-rotar-izq').addEventListener('click', () => cambiarRotacionManual(-90));
         document.getElementById('btn-rotar-der').addEventListener('click', () => cambiarRotacionManual(90));
 
+        // CARA A RESTABLECIDA A 0.095 PARA VOLVER A CENTRARLA
         function asegurarCablesTotalesCruz() {
             const rect = lienzo.getBoundingClientRect();
             const w = rect.width || 300;
