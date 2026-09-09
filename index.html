@@ -73,7 +73,7 @@
         .elemento-draggable.selected[data-cara="D"] { border-color: #6f42c1; box-shadow: 0 0 10px rgba(111, 66, 193, 0.6); background: rgba(111, 66, 193, 0.15); z-index: 50; }
 
         /* BADGES COLOR DE CARA EN CADA ELEMENTO */
-        .badge-cara { position: absolute; top: -8px; right: -8px; color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        .badge-cara { position: absolute; top: -8px; right: -8px; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         .badge-cara[data-cara="A"] { background-color: #007bff; }
         .badge-cara[data-cara="B"] { background-color: #28a745; }
         .badge-cara[data-cara="C"] { background-color: #fd7e14; }
@@ -84,8 +84,8 @@
         
         .tubo-ind { width: 22px; height: 22px; border: 2px solid #2b4c7e; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; background: transparent; color: #8b5a2b; }
 
-        .texto-libre { font-size: 15px; font-weight: bold; color: #000; padding: 2px 4px; background: transparent; }
-        .texto-libre.cables-totales { color: #000; }
+        .texto-libre { font-size: 14px; font-weight: bold; color: #000; padding: 1px 3px; background: transparent; white-space: nowrap; }
+        .texto-libre.cables-totales { color: #000; letter-spacing: 0.5px; }
     </style>
 </head>
 <body>
@@ -302,15 +302,24 @@
         document.getElementById('btn-rotar-izq').addEventListener('click', () => cambiarRotacionManual(-90));
         document.getElementById('btn-rotar-der').addEventListener('click', () => cambiarRotacionManual(90));
 
+        // CENTRADO EXACTO DE LOS (0,0) DENTRO DE CADA CAJETÍN REAL
         function asegurarCablesTotalesCruz() {
             const rect = lienzo.getBoundingClientRect();
             const w = rect.width || 300;
             const h = rect.height || 300;
 
-            crearElementoEnDOM('cables', '(0,0)', w * 0.42, h * 0.10, 0, 0, 0, 1, 0, 'A'); // Cara A
-            crearElementoEnDOM('cables', '(0,0)', w * 0.72, h * 0.48, 0, 0, 0, 1, 0, 'B'); // Cara B
-            crearElementoEnDOM('cables', '(0,0)', w * 0.42, h * 0.84, 0, 0, 0, 1, 0, 'C'); // Cara C
-            crearElementoEnDOM('cables', '(0,0)', w * 0.12, h * 0.48, 0, 0, 0, 1, 0, 'D'); // Cara D
+            // CARA A: Centrado en el cajetín horizontal superior
+            crearElementoEnDOM('cables', '(0,0)', w * 0.44, h * 0.125, 0, 0, 0, 1, 0, 'A');
+            
+            // CARA B: Centrado en el cajetín vertical derecho (Rotado 90deg)
+            crearElementoEnDOM('cables', '(0,0)', w * 0.81, h * 0.47, 0, 0, 90, 1, 0, 'B'); 
+            
+            // CARA C: Centrado en el cajetín horizontal inferior
+            crearElementoEnDOM('cables', '(0,0)', w * 0.44, h * 0.825, 0, 0, 0, 1, 0, 'C'); 
+            
+            // CARA D: Centrado en el cajetín vertical izquierdo (Rotado 90deg)
+            crearElementoEnDOM('cables', '(0,0)', w * 0.12, h * 0.47, 0, 0, 90, 1, 0, 'D'); 
+
             seleccionarElemento(null);
         }
 
@@ -414,7 +423,6 @@
                 });
             }
 
-            // Circulito (Badge) coloreado según la cara
             let badge = document.createElement('div');
             badge.className = 'badge-cara';
             badge.setAttribute('data-cara', cara || 'A');
