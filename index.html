@@ -7,54 +7,67 @@
     <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
     <style>
         * { box-sizing: border-box; font-family: Arial, sans-serif; user-select: none; }
-        body { margin: 0; padding: 0; background-color: #e9ecef; overflow: hidden; }
-        header { display: flex; justify-content: space-between; padding: 12px; background: #343a40; color: white; align-items: center; z-index: 10; position: relative;}
+        body { margin: 0; padding: 0; background-color: #e9ecef; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
+        header { width: 100%; display: flex; justify-content: space-between; padding: 12px 16px; background: #343a40; color: white; align-items: center; z-index: 10; position: relative;}
         header h2 { margin: 0; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 65vw; }
         #btn-guardar { background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; font-size: 15px;}
         
-        #lienzo {
+        /* Contenedor principal ajustado para centrar la cruz en cualquier pantalla */
+        #contenedor-lienzo {
             width: 100vw;
-            height: 52vh; 
+            max-width: 500px;
+            height: 52vh;
+            max-height: 500px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #333;
+            position: relative;
+        }
+
+        #lienzo {
+            width: 100%;
+            height: 100%;
             background-color: white;
             background-image: url('plantilla_cruz.png');
             background-size: contain;
             background-position: center center;
             background-repeat: no-repeat;
             position: relative;
-            border-bottom: 2px solid #ccc;
             touch-action: none;
+            overflow: hidden;
         }
 
-        .controles { display: flex; justify-content: space-around; padding: 10px; background: #fff; }
-        .controles button { padding: 12px; font-size: 16px; background: #007bff; color: white; border: none; border-radius: 8px; width: 45%; font-weight: bold;}
+        .controles { width: 100%; max-width: 500px; display: flex; justify-content: space-around; padding: 8px; background: #fff; }
+        .controles button { padding: 10px; font-size: 15px; background: #007bff; color: white; border: none; border-radius: 8px; width: 48%; font-weight: bold;}
         
-        .herramientas { display: flex; justify-content: space-between; gap: 5px; padding: 8px 10px; background: #f8f9fa; border-top: 1px solid #ddd; }
-        .herramientas button { flex: 1; padding: 10px 5px; font-size: 15px; background: #6c757d; color: white; border: none; border-radius: 8px; font-weight: bold; text-align: center;}
+        .herramientas { width: 100%; max-width: 500px; display: flex; justify-content: space-between; gap: 5px; padding: 6px 10px; background: #f8f9fa; border-top: 1px solid #ddd; }
+        .herramientas button { flex: 1; padding: 8px 4px; font-size: 14px; background: #6c757d; color: white; border: none; border-radius: 8px; font-weight: bold; text-align: center;}
         .herramientas button:active { background: #5a6268; }
         
         #btn-eliminar { background: #dc3545; } 
         #btn-eliminar:active { background: #c82333; }
 
-        #modal-opciones { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 100; align-items: flex-end; }
-        .modal-content { background: white; width: 100%; border-radius: 20px 20px 0 0; padding: 20px; max-height: 70vh; overflow-y: auto; }
+        #modal-opciones { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 100; align-items: flex-end; justify-content: center; }
+        .modal-content { background: white; width: 100%; max-width: 500px; border-radius: 20px 20px 0 0; padding: 20px; max-height: 70vh; overflow-y: auto; }
         .modal-content h3 { margin-top: 0; border-bottom: 2px solid #dc3545; padding-bottom: 10px; color: #dc3545; }
         .opcion-lista { padding: 15px; border-bottom: 1px solid #eee; font-size: 16px; display: flex; align-items: center; justify-content: space-between; }
         .opcion-info { display: flex; align-items: center; gap: 10px; }
 
         .elemento-draggable {
             position: absolute; display: flex; flex-direction: column; align-items: center;
-            padding: 4px; background: transparent; touch-action: none; cursor: grab;
+            padding: 2px; background: transparent; touch-action: none; cursor: grab;
             border-radius: 6px; border: 2px solid transparent;
         }
         
         .elemento-draggable.selected { border-color: #007bff; box-shadow: 0 0 10px rgba(0,123,255,0.5); background: rgba(255, 255, 255, 0.4); z-index: 50;}
 
-        .titulo-conducto { font-weight: bold; font-size: 14px; margin-bottom: 2px; color: #000; text-align: center; }
+        .titulo-conducto { font-weight: bold; font-size: 13px; margin-bottom: 2px; color: #000; text-align: center; }
         .grid-tubos { display: grid; gap: 2px; justify-items: center; }
         
-        .tubo-ind { width: 24px; height: 24px; border: 2px solid #2b4c7e; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; background: transparent; color: #8b5a2b; }
+        .tubo-ind { width: 22px; height: 22px; border: 2px solid #2b4c7e; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; background: transparent; color: #8b5a2b; }
 
-        .texto-libre { font-size: 16px; font-weight: bold; color: #000; padding: 2px 6px; background: transparent; }
+        .texto-libre { font-size: 15px; font-weight: bold; color: #000; padding: 2px 4px; background: transparent; }
         .texto-libre.cables-totales { color: #000; }
     </style>
 </head>
@@ -64,7 +77,9 @@
         <button id="btn-guardar">GUARDAR</button>
     </header>
 
-    <div id="lienzo"></div>
+    <div id="contenedor-lienzo">
+        <div id="lienzo"></div>
+    </div>
 
     <div class="controles">
         <button id="btn-add-conducto">+ Conducto</button>
@@ -134,23 +149,21 @@
             cargarDatosGuardados();
         }
 
-        // ZONIFICACIÓN EXACTA EN PORCENTAJES SOBRE EL LIENZO
+        // CÁLCULO PRECISO DE CARAS EN BASE AL CENTRO DE LA CRUZ
         function calcularCaraPWA(x, y) {
             const rect = lienzo.getBoundingClientRect();
             const w = rect.width || 300;
             const h = rect.height || 300;
 
-            const posX = x / w; // % Horizontal (0.0 a 1.0)
-            const posY = y / h; // % Vertical (0.0 a 1.0)
+            const relX = x - (w / 2);
+            const relY = y - (h / 2);
 
-            // Zonas prioritarias para brazos de la cruz
-            if (posY < 0.38) return 'A'; // Zona Superior (Cara A)
-            if (posY > 0.62) return 'C'; // Zona Inferior (Cara C)
-            if (posX > 0.60) return 'B'; // Zona Derecha (Cara B)
-            if (posX < 0.40) return 'D'; // Zona Izquierda (Cara D)
-
-            // En el centro exacto: según la inclinación
-            return posY < 0.5 ? 'A' : 'C';
+            // Angulo respecto al centro exacto de la cruz
+            if (Math.abs(relX) > Math.abs(relY)) {
+                return relX > 0 ? 'B' : 'D'; // Derecha -> B | Izquierda -> D
+            } else {
+                return relY < 0 ? 'A' : 'C'; // Arriba -> A | Abajo -> C
+            }
         }
 
         function cargarDatosGuardados() {
@@ -255,10 +268,10 @@
             const w = rect.width || 300;
             const h = rect.height || 300;
 
-            crearElementoEnDOM('cables', '(0,0)', w * 0.45, h * 0.08, 0, 0, 0, 1, 0); // Cara A
-            crearElementoEnDOM('cables', '(0,0)', w * 0.78, h * 0.48, 0, 0, 0, 1, 0); // Cara B
-            crearElementoEnDOM('cables', '(0,0)', w * 0.45, h * 0.88, 0, 0, 0, 1, 0); // Cara C
-            crearElementoEnDOM('cables', '(0,0)', w * 0.08, h * 0.48, 0, 0, 0, 1, 0); // Cara D
+            crearElementoEnDOM('cables', '(0,0)', w * 0.45, h * 0.12, 0, 0, 0, 1, 0); // Cara A
+            crearElementoEnDOM('cables', '(0,0)', w * 0.72, h * 0.48, 0, 0, 0, 1, 0); // Cara B
+            crearElementoEnDOM('cables', '(0,0)', w * 0.45, h * 0.84, 0, 0, 0, 1, 0); // Cara C
+            crearElementoEnDOM('cables', '(0,0)', w * 0.18, h * 0.48, 0, 0, 0, 1, 0); // Cara D
             seleccionarElemento(null);
         }
 
@@ -280,7 +293,7 @@
             cerrarModal();
             let opc = opcionesPredefinidas[idx];
             const rect = lienzo.getBoundingClientRect();
-            crearElementoEnDOM('conducto', '', rect.width/2 - 20, rect.height/2 - 20, opc.prisma, opc.diametro, 0, 1, opc.cols);
+            crearElementoEnDOM('conducto', '', rect.width/2 - 25, rect.height/2 - 25, opc.prisma, opc.diametro, 0, 1, opc.cols);
         }
 
         function abrirPersonalizado() {
@@ -289,13 +302,13 @@
             let d = prompt("Diámetro:");
             let c = prompt("Nº de Columnas (ej: 2 o 3):", "2");
             const rect = lienzo.getBoundingClientRect();
-            if(p && d) crearElementoEnDOM('conducto', '', rect.width/2 - 20, rect.height/2 - 20, parseInt(p), d, 0, 1, parseInt(c || 2));
+            if(p && d) crearElementoEnDOM('conducto', '', rect.width/2 - 25, rect.height/2 - 25, parseInt(p), d, 0, 1, parseInt(c || 2));
         }
 
         document.getElementById('btn-add-texto').addEventListener('click', () => {
             let texto = prompt("Escribe tu nota:");
             const rect = lienzo.getBoundingClientRect();
-            if(texto) crearElementoEnDOM('texto', texto, rect.width/2 - 20, rect.height/2 - 20, 0, 0, 0, 1, 0);
+            if(texto) crearElementoEnDOM('texto', texto, rect.width/2 - 25, rect.height/2 - 25, 0, 0, 0, 1, 0);
         });
 
         function renderizarTubosInternos(div, prisma, diametro, cols) {
