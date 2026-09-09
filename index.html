@@ -47,7 +47,6 @@
         #btn-eliminar { background: #dc3545; } 
         #btn-eliminar:active { background: #c82333; }
 
-        /* PANEL DE CONTROL DE CARA CON COLORES */
         #panel-cara {
             width: 100%; max-width: 500px; background: #007bff; color: white; padding: 8px 12px;
             display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 14px;
@@ -66,13 +65,11 @@
             border-radius: 6px; border: 2px solid transparent;
         }
         
-        /* ESTILOS DE SELECCIÓN SEGÚN CARA */
         .elemento-draggable.selected[data-cara="A"] { border-color: #007bff; box-shadow: 0 0 10px rgba(0, 123, 255, 0.6); background: rgba(0, 123, 255, 0.15); z-index: 50; }
         .elemento-draggable.selected[data-cara="B"] { border-color: #28a745; box-shadow: 0 0 10px rgba(40, 167, 69, 0.6); background: rgba(40, 167, 69, 0.15); z-index: 50; }
         .elemento-draggable.selected[data-cara="C"] { border-color: #fd7e14; box-shadow: 0 0 10px rgba(253, 126, 20, 0.6); background: rgba(253, 126, 20, 0.15); z-index: 50; }
         .elemento-draggable.selected[data-cara="D"] { border-color: #6f42c1; box-shadow: 0 0 10px rgba(111, 66, 193, 0.6); background: rgba(111, 66, 193, 0.15); z-index: 50; }
 
-        /* BADGES COLOR DE CARA EN CADA ELEMENTO */
         .badge-cara { position: absolute; top: -8px; right: -8px; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         .badge-cara[data-cara="A"] { background-color: #007bff; }
         .badge-cara[data-cara="B"] { background-color: #28a745; }
@@ -98,7 +95,6 @@
         <div id="lienzo"></div>
     </div>
 
-    <!-- Panel Dinámico de Cara -->
     <div id="panel-cara">
         <span>Asignación de Cara:</span>
         <select id="select-cara-elemento" onchange="cambiarCaraSeleccionada(this.value)">
@@ -156,10 +152,10 @@
         let modoSeleccionMultiple = false;
 
         const coloresCaras = {
-            'A': '#007bff', // Azul
-            'B': '#28a745', // Verde
-            'C': '#fd7e14', // Naranja
-            'D': '#6f42c1'  // Morado
+            'A': '#007bff',
+            'B': '#28a745',
+            'C': '#fd7e14',
+            'D': '#6f42c1'
         };
 
         const opcionesPredefinidas = [
@@ -302,23 +298,23 @@
         document.getElementById('btn-rotar-izq').addEventListener('click', () => cambiarRotacionManual(-90));
         document.getElementById('btn-rotar-der').addEventListener('click', () => cambiarRotacionManual(90));
 
-        // POSICIONAMIENTO FINO Y CENTRADO DE CADA CAJETÍN REAL
+        // AJUSTE FINO DE POSICIONES
         function asegurarCablesTotalesCruz() {
             const rect = lienzo.getBoundingClientRect();
             const w = rect.width || 300;
             const h = rect.height || 300;
 
-            // CARA A: Un poco más arriba dentro del cajetín superior
-            crearElementoEnDOM('cables', '(0,0)', w * 0.44, h * 0.085, 0, 0, 0, 1, 0, 'A');
+            // CARA A: Arriba
+            crearElementoEnDOM('cables', '(0,0)', w * 0.44, h * 0.06, 0, 0, 0, 1, 0, 'A');
             
-            // CARA B: Un poco más abajo y a la izquierda dentro del cajetín vertical derecho
-            crearElementoEnDOM('cables', '(0,0)', w * 0.77, h * 0.49, 0, 0, 90, 1, 0, 'B'); 
+            // CARA B: Derecha rotado 90°
+            crearElementoEnDOM('cables', '(0,0)', w * 0.78, h * 0.50, 0, 0, 90, 1, 0, 'B'); 
             
-            // CARA C: Un poco más abajo dentro del cajetín inferior
-            crearElementoEnDOM('cables', '(0,0)', w * 0.44, h * 0.865, 0, 0, 0, 1, 0, 'C'); 
+            // CARA C: Abajo
+            crearElementoEnDOM('cables', '(0,0)', w * 0.44, h * 0.88, 0, 0, 0, 1, 0, 'C'); 
             
-            // CARA D: Un poco más abajo dentro del cajetín vertical izquierdo
-            crearElementoEnDOM('cables', '(0,0)', w * 0.12, h * 0.49, 0, 0, 90, 1, 0, 'D'); 
+            // CARA D: Izquierda rotado 90°
+            crearElementoEnDOM('cables', '(0,0)', w * 0.14, h * 0.50, 0, 0, 90, 1, 0, 'D'); 
 
             seleccionarElemento(null);
         }
