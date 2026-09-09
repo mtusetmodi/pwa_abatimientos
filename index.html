@@ -64,16 +64,8 @@
             border-radius: 6px; border: 2px solid transparent;
         }
         
-        .elemento-draggable.selected[data-cara="A"] { border-color: #007bff; box-shadow: 0 0 10px rgba(0, 123, 255, 0.6); background: rgba(0, 123, 255, 0.15); z-index: 50; }
-        .elemento-draggable.selected[data-cara="B"] { border-color: #28a745; box-shadow: 0 0 10px rgba(40, 167, 69, 0.6); background: rgba(40, 167, 69, 0.15); z-index: 50; }
-        .elemento-draggable.selected[data-cara="C"] { border-color: #fd7e14; box-shadow: 0 0 10px rgba(253, 126, 20, 0.6); background: rgba(253, 126, 20, 0.15); z-index: 50; }
-        .elemento-draggable.selected[data-cara="D"] { border-color: #6f42c1; box-shadow: 0 0 10px rgba(111, 66, 193, 0.6); background: rgba(111, 66, 193, 0.15); z-index: 50; }
-
-        .badge-cara { position: absolute; top: -8px; right: -8px; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
-        .badge-cara[data-cara="A"] { background-color: #007bff; }
-        .badge-cara[data-cara="B"] { background-color: #28a745; }
-        .badge-cara[data-cara="C"] { background-color: #fd7e14; }
-        .badge-cara[data-cara="D"] { background-color: #6f42c1; }
+        /* Borde sutil al seleccionar el elemento sin cargar la interfaz de badges */
+        .elemento-draggable.selected { border-color: #007bff; box-shadow: 0 0 10px rgba(0, 123, 255, 0.6); background: rgba(0, 123, 255, 0.15); z-index: 50; }
 
         .titulo-conducto { font-weight: bold; font-size: 13px; margin-bottom: 2px; color: #000; text-align: center; }
         .grid-tubos { display: grid; gap: 2px; justify-items: center; }
@@ -182,23 +174,15 @@
             let x = parseFloat(el.getAttribute('data-x')) || 0;
             let y = parseFloat(el.getAttribute('data-y')) || 0;
             let caraAuto = calcularCaraPorPosicion(x, y);
-
             el.setAttribute('data-cara', caraAuto);
-            let badge = el.querySelector('.badge-cara');
-            if (badge) {
-                badge.innerText = caraAuto;
-                badge.setAttribute('data-cara', caraAuto);
-            }
         }
 
-        // PERSISTENCIA: CARGA DESDE MEMORIA LOCAL O GOOGLE SHEETS
         function cargarDatosGuardados() {
             if (arquetaId === "SIN_ID") {
                 asegurarCablesTotalesCruz();
                 return;
             }
 
-            // 1. Verificar si hay un guardado local más reciente
             let localData = localStorage.getItem(`arqueta_${arquetaId}`);
             if (localData) {
                 try {
@@ -215,7 +199,6 @@
                 } catch(e) {}
             }
 
-            // 2. Si no hay local o falló, cargar desde Google Sheets
             fetch(`${urlScript}?arqueta=${encodeURIComponent(arquetaId)}`)
                 .then(response => response.json())
                 .then(data => {
@@ -422,12 +405,6 @@
                 });
             }
 
-            let badge = document.createElement('div');
-            badge.className = 'badge-cara';
-            badge.setAttribute('data-cara', caraCalculada);
-            badge.innerText = caraCalculada;
-            div.appendChild(badge);
-
             lienzo.appendChild(div);
             
             if (!modoSeleccionMultiple) {
@@ -457,7 +434,6 @@
                             el.setAttribute('data-x', x);
                             el.setAttribute('data-y', y);
 
-                            // Actualizar asignación automática de cara al arrastrar
                             actualizarCaraDeElemento(el);
                         });
                     }
@@ -494,7 +470,6 @@
             setTimeout(() => { banner.style.display = 'none'; }, 4000);
         }
 
-        // GUARDADO CON SOPORTE OFFLINE Y CAPTURA DE IMAGEN
         document.getElementById('btn-guardar').addEventListener('click', () => {
             let btn = document.getElementById('btn-guardar');
             btn.innerText = "Capturando...";
@@ -522,12 +497,10 @@
                     });
                 });
 
-                // 1. Guardar en memoria del móvil de inmediato
                 localStorage.setItem(`arqueta_${arquetaId}`, JSON.stringify(estadoLienzo));
 
                 btn.innerText = "Guardando...";
 
-                // 2. Si no hay conexión a internet
                 if (!navigator.onLine) {
                     guardarEnColaOffline(estadoLienzo);
                     alert("⚠️ Sin conexión a internet. El abatimiento ha quedado guardado localmente en tu móvil. Se subirá a Google Sheets automáticamente al recuperar la cobertura.");
@@ -535,7 +508,6 @@
                     return;
                 }
 
-                // 3. Enviar a Google Apps Script
                 fetch(urlScript, {
                     method: 'POST',
                     mode: 'no-cors',
@@ -552,10 +524,8 @@
             });
         });
 
-        // GESTIÓN DE COLA OFFLINE Y RECONEXIÓN AUTOMÁTICA
         function guardarEnColaOffline(datos) {
             let cola = JSON.parse(localStorage.getItem('cola_pendientes_arqueta') || '[]');
-            // Reemplazar si ya existía en la cola
             cola = cola.filter(item => item.id_arqueta !== datos.id_arqueta);
             cola.push(datos);
             localStorage.setItem('cola_pendientes_arqueta', JSON.stringify(cola));
