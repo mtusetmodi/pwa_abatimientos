@@ -148,7 +148,7 @@
             cargarDatosGuardados();
         }
 
-        // Detección exacta del cuadrante según la posición física real en pantalla
+        // DETECCIÓN GEOMÉTRICA POR ÁNGULOS (TRIGONOMETRÍA EXACTA)
         function calcularCaraDOM(el) {
             const rectLienzo = lienzo.getBoundingClientRect();
             const rectEl = el.getBoundingClientRect();
@@ -157,17 +157,24 @@
             const centroElX = (rectEl.left + rectEl.width / 2) - rectLienzo.left;
             const centroElY = (rectEl.top + rectEl.height / 2) - rectLienzo.top;
 
-            const w = rectLienzo.width;
-            const h = rectLienzo.height;
+            // Centro geométrico del lienzo
+            const centroLienzoX = rectLienzo.width / 2;
+            const centroLienzoY = rectLienzo.height / 2;
 
-            const relX = centroElX - (w / 2);
-            const relY = centroElY - (h / 2);
+            const deltaX = centroElX - centroLienzoX;
+            const deltaY = centroElY - centroLienzoY;
 
-            // Comparar distancias relativas desde el centro geométrico de la cruz
-            if (Math.abs(relX) > Math.abs(relY)) {
-                return relX > 0 ? 'B' : 'D'; // Derecha -> CARA B | Izquierda -> CARA D
+            // Ángulo en grados (-180 a +180)
+            const angulo = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+
+            if (angulo >= -135 && angulo < -45) {
+                return 'A'; // Arriba (Norte)
+            } else if (angulo >= -45 && angulo < 45) {
+                return 'B'; // Derecha (Este)
+            } else if (angulo >= 45 && angulo < 135) {
+                return 'C'; // Abajo (Sur)
             } else {
-                return relY < 0 ? 'A' : 'C'; // Arriba -> CARA A | Abajo -> CARA C
+                return 'D'; // Izquierda (Oeste)
             }
         }
 
@@ -437,7 +444,6 @@
                 let posX = parseFloat(el.getAttribute('data-x')) || 0;
                 let posY = parseFloat(el.getAttribute('data-y')) || 0;
                 
-                // Cálculo 100% basado en la posición física real en pantalla del objeto
                 let caraCalculada = calcularCaraDOM(el);
 
                 estadoLienzo.elementos.push({
