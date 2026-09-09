@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Abatimiento Completo</title>
+    
+    <!-- Enlace al Manifest para soporte PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#343a40">
+
     <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
@@ -64,7 +69,6 @@
             border-radius: 6px; border: 2px solid transparent;
         }
         
-        /* Borde sutil al seleccionar el elemento sin cargar la interfaz de badges */
         .elemento-draggable.selected { border-color: #007bff; box-shadow: 0 0 10px rgba(0, 123, 255, 0.6); background: rgba(0, 123, 255, 0.15); z-index: 50; }
 
         .titulo-conducto { font-weight: bold; font-size: 13px; margin-bottom: 2px; color: #000; text-align: center; }
@@ -117,6 +121,13 @@
     </div>
 
     <script>
+        // REGISTRO DEL SERVICE WORKER PARA CARGA 100% OFFLINE
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js').then(() => {
+                console.log('Service Worker Registrado Exitosamente.');
+            }).catch(err => console.error('Error al registrar SW:', err));
+        }
+
         const urlScript = "https://script.google.com/macros/s/AKfycbzgetL9wcujKF9VIF5VsNPCytAi21s-EeFKPdt-kgpJFIxC7Jb_mku6YRbgE477VOty/exec"; 
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -157,17 +168,16 @@
             sincronizarPendientesOffline();
         }
 
-        // CÁLCULO AUTOMÁTICO DE LA CARA SEGÚN LA POSICIÓN EN LA CRUZ
         function calcularCaraPorPosicion(x, y) {
             const rect = lienzo.getBoundingClientRect();
             const relX = x / (rect.width || 300);
             const relY = y / (rect.height || 300);
 
-            if (relY < 0.35) return 'A';         // Zona Superior -> CARA A
-            if (relY > 0.65) return 'C';         // Zona Inferior -> CARA C
-            if (relX > 0.60) return 'B';         // Zona Derecha -> CARA B
-            if (relX < 0.40) return 'D';         // Zona Izquierda -> CARA D
-            return 'A'; // Por defecto
+            if (relY < 0.35) return 'A';
+            if (relY > 0.65) return 'C';
+            if (relX > 0.60) return 'B';
+            if (relX < 0.40) return 'D';
+            return 'A';
         }
 
         function actualizarCaraDeElemento(el) {
@@ -193,7 +203,7 @@
                             crearElementoEnDOM(el.tipo, el.texto, parseFloat(el.x), parseFloat(el.y), parseInt(el.prisma), el.diametro, parseFloat(el.rotacion), parseFloat(el.escala), parseInt(el.cols), el.cara);
                         });
                         seleccionarElemento(null);
-                        mostrarBanner("📦 Cargado desde copia local reciente", "#17a2b8");
+                        mostrarBanner("📦 Cargado desde memoria offline del dispositivo", "#17a2b8");
                         return;
                     }
                 } catch(e) {}
