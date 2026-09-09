@@ -56,6 +56,8 @@
         
         #btn-eliminar { background: #dc3545; } 
         #btn-eliminar:active { background: #c82333; }
+        
+        #btn-lock-cables { background: #ffc107; color: #212529; font-weight: bold; }
 
         #modal-opciones { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 100; align-items: flex-end; justify-content: center; }
         .modal-content { background: white; width: 100%; max-width: 500px; border-radius: 20px 20px 0 0; padding: 20px; max-height: 70vh; overflow-y: auto; }
@@ -106,6 +108,7 @@
     <div class="herramientas">
         <button id="btn-eliminar">🗑️ Eliminar</button>
         <button id="btn-multi">☐ Sel. Múltiple</button>
+        <button id="btn-lock-cables">🔒 Fijar (0,0)</button>
     </div>
 
     <div id="modal-opciones">
@@ -142,6 +145,7 @@
 
         let elementosSeleccionados = new Set();
         let modoSeleccionMultiple = false;
+        let cablesBloqueados = true; // Bloqueado por defecto para no moverlos sin querer
 
         const opcionesPredefinidas = [
             { prisma: 1, diametro: 110, cols: 1, label: "1 ø 110" },
@@ -164,6 +168,46 @@
             renderizarListaConductos(); 
             cargarDatosGuardados();
             sincronizarPendientesOffline();
+            actualizarEstadoBotonLock();
+        }
+
+        // TOGGLE PARA BLOQUEAR / DESBLOQUEAR Y GUARDAR POSICIÓN GLOBAL DE (0,0)
+        const btnLock = document.getElementById('btn-lock-cables');
+        btnLock.addEventListener('click', () => {
+            cablesBloqueados = !cablesBloqueados;
+            
+            if (cablesBloqueados) {
+                // Guardar la posición actual de los 4 elementos cables en localStorage
+                guardarPosicionesFijasCables();
+                mostrarBanner("🔒 Posiciones de (0,0) FIJADAS para todas las arquetas", "#28a745");
+            } else {
+                mostrarBanner("🔓 (0,0) Desbloqueados: Mantenlos pulsados y muévelos a la posición deseada", "#ffc107");
+            }
+            actualizarEstadoBotonLock();
+        });
+
+        function actualizarEstadoBotonLock() {
+            if (cablesBloqueados) {
+                btnLock.innerText = "🔒 Fijado (0,0)";
+                btnLock.style.backgroundColor = "#28a745";
+                btnLock.style.color = "white";
+            } else {
+                btnLock.innerText = "🔓 Mover (0,0)";
+                btnLock.style.backgroundColor = "#ffc107";
+                btnLock.style.color = "#212529";
+            }
+        }
+
+        function guardarPosicionesFijasCables() {
+            let configCables = {};
+            document.querySelectorAll('.elemento-draggable[data-tipo="cables"]').forEach(el => {
+                let cara = el.getAttribute('data-cara');
+                configCables[cara] = {
+                    x: el.getAttribute('data-x'),
+                    y: el.getAttribute('data-y')
+                };
+            });
+            localStorage.setItem('config_fija_cables', JSON.stringify(configCables));
         }
 
         function calcularCaraPorPosicion(x, y) {
@@ -261,7 +305,12 @@
         });
 
         document.getElementById('btn-eliminar').addEventListener('click', () => {
-            elementosSeleccionados.forEach(el => el.remove());
+            elementosSeleccionados.forEach(el => {
+                // No permitir eliminar los (0,0) base
+                if (el.getAttribute('data-tipo') !== 'cables') {
+                    el.remove();
+                }
+            });
             elementosSeleccionados.clear();
         });
 
@@ -298,23 +347,27 @@
         document.getElementById('btn-rotar-izq').addEventListener('click', () => cambiarRotacionManual(-90));
         document.getElementById('btn-rotar-der').addEventListener('click', () => cambiarRotacionManual(90));
 
-        // CENTRADO EXACTO DE LOS (0,0) DENTRO DE LOS RECUADROS
+        // CARGA POSICIONES FIJAS GUARDADAS O VALORES POR DEFECTO
         function asegurarCablesTotalesCruz() {
             const rect = lienzo.getBoundingClientRect();
             const w = rect.width || 300;
             const h = rect.height || 300;
 
-            // CARA A: Ajustado a 0.125 para centrar en su casilla
-            crearElementoEnDOM('cables', '(0,0)', w * 0.44, h * 0.125, 0, 0, 0, 1, 0, 'A');
-            
-            // CARA B: Derecha
-            crearElementoEnDOM('cables', '(0,0)', w * 0.785, h * 0.50, 0, 0, 90, 1, 0, 'B'); 
-            
-            // CARA C: Ajustado a 0.855 para centrar en su casilla
-            crearElementoEnDOM('cables', '(0,0)', w * 0.44, h * 0.855, 0, 0, 0, 1, 0, 'C'); 
-            
-            // CARA D: Izquierda
-            crearElementoEnDOM('cables', '(0,0)', w * 0.12, h * 0.50, 0, 0, 90, 1, 0, 'D'); 
+            let configGuardada = localStorage.getItem('config_fija_cables');
+            let posiciones = null;
+            if (configGuardada) {
+                try { posiciones = JSON.parse(configGuardada); } catch(e){}
+            }
+
+            let posA = posiciones && posiciones['A'] ? { x: parseFloat(posiciones['A'].x), y: parseFloat(posiciones['A'].y) } : { x: w * 0.44, y: h * 0.125 };
+            let posB = posiciones && posiciones['B'] ? { x: parseFloat(posiciones['B'].x), y: parseFloat(posiciones['B'].y) } : { x: w * 0.785, y: h * 0.50 };
+            let posC = posiciones && posiciones['C'] ? { x: parseFloat(posiciones['C'].x), y: parseFloat(posiciones['C'].y) } : { x: w * 0.44, y: h * 0.855 };
+            let posD = posiciones && posiciones['D'] ? { x: parseFloat(posiciones['D'].x), y: parseFloat(posiciones['D'].y) } : { x: w * 0.12, y: h * 0.50 };
+
+            crearElementoEnDOM('cables', '(0,0)', posA.x, posA.y, 0, 0, 0, 1, 0, 'A');
+            crearElementoEnDOM('cables', '(0,0)', posB.x, posB.y, 0, 0, 90, 1, 0, 'B'); 
+            crearElementoEnDOM('cables', '(0,0)', posC.x, posC.y, 0, 0, 0, 1, 0, 'C'); 
+            crearElementoEnDOM('cables', '(0,0)', posD.x, posD.y, 0, 0, 90, 1, 0, 'D'); 
 
             seleccionarElemento(null);
         }
@@ -431,6 +484,7 @@
             }
         }
 
+        // INTERRUPCIÓN DE ARRASTRE SI CABLES ESTÁ BLOQUEADO
         interact('.elemento-draggable')
             .draggable({
                 inertia: true,
@@ -441,6 +495,11 @@
                     },
                     move (event) {
                         elementosSeleccionados.forEach(el => {
+                            // Si es de tipo 'cables' y están bloqueados, NO mover
+                            if (el.getAttribute('data-tipo') === 'cables' && cablesBloqueados) {
+                                return;
+                            }
+
                             let x = (parseFloat(el.getAttribute('data-x')) || 0) + event.dx;
                             let y = (parseFloat(el.getAttribute('data-y')) || 0) + event.dy;
                             let rot = el.getAttribute('data-rotacion') || 0;
