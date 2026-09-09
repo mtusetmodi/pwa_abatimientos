@@ -28,7 +28,6 @@
         .controles { display: flex; justify-content: space-around; padding: 10px; background: #fff; }
         .controles button { padding: 12px; font-size: 16px; background: #007bff; color: white; border: none; border-radius: 8px; width: 45%; font-weight: bold;}
         
-        /* Filas de herramientas */
         .herramientas { display: flex; justify-content: space-between; gap: 5px; padding: 8px 10px; background: #f8f9fa; border-top: 1px solid #ddd; }
         .herramientas button { flex: 1; padding: 10px 5px; font-size: 16px; background: #6c757d; color: white; border: none; border-radius: 8px; font-weight: bold; text-align: center;}
         .herramientas button:active { background: #5a6268; }
@@ -41,7 +40,6 @@
         .modal-content h3 { margin-top: 0; border-bottom: 2px solid #dc3545; padding-bottom: 10px; color: #dc3545; }
         .opcion-lista { padding: 15px; border-bottom: 1px solid #eee; font-size: 18px; display: flex; align-items: center; gap: 10px; }
         
-        /* Elemento Draggable SIN FONDO */
         .elemento-draggable {
             position: absolute; display: flex; flex-direction: column; align-items: center;
             padding: 4px; background: transparent; touch-action: none; cursor: grab;
@@ -53,7 +51,6 @@
         .titulo-conducto { font-weight: bold; font-size: 14px; margin-bottom: 2px; color: #000; text-align: center; }
         .grid-tubos { display: grid; gap: 2px; justify-items: center; }
         
-        /* Tubos individuales con fondo transparente */
         .tubo-ind { width: 24px; height: 24px; border: 2px solid #2b4c7e; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; background: transparent; color: #8b5a2b; }
 
         .texto-libre { font-size: 16px; font-weight: bold; color: #000; padding: 2px 6px; background: transparent; }
@@ -189,10 +186,10 @@
         document.getElementById('btn-rotar-der').addEventListener('click', () => cambiarRotacionManual(90));
 
         function asegurarCablesTotalesCruz() {
-            crearElementoEnDOM('cables', '(0,0)', 150, 40, 0, 0, 0, 1);  // Cara A
-            crearElementoEnDOM('cables', '(0,0)', 260, 170, 0, 0, 0, 1); // Cara B
-            crearElementoEnDOM('cables', '(0,0)', 150, 310, 0, 0, 0, 1); // Cara C
-            crearElementoEnDOM('cables', '(0,0)', 40, 170, 0, 0, 0, 1);  // Cara D
+            crearElementoEnDOM('cables', '(0,0)', 150, 40, 0, 0, 0, 1);  
+            crearElementoEnDOM('cables', '(0,0)', 260, 170, 0, 0, 0, 1); 
+            crearElementoEnDOM('cables', '(0,0)', 150, 310, 0, 0, 0, 1); 
+            crearElementoEnDOM('cables', '(0,0)', 40, 170, 0, 0, 0, 1);  
             seleccionarElemento(null);
         }
 
@@ -215,7 +212,7 @@
             cerrarModal();
             let p = prompt("Nº de Tubos (Prisma):");
             let d = prompt("Diámetro:");
-            if(p && d) seleccionarConducto(p, d);
+            if(p && d) seleccionarConducto(parseInt(p), d);
         }
 
         document.getElementById('btn-add-texto').addEventListener('click', () => {
@@ -242,12 +239,25 @@
             });
 
             if(tipo === 'conducto') {
+                prisma = parseInt(prisma);
                 let cols = prisma > 3 ? 2 : prisma; 
-                if (prisma == 6) cols = 2; 
-                
+                if (prisma === 6) cols = 2; 
+                if (prisma === 5) cols = 2;
+
+                let filas = Math.ceil(prisma / cols);
                 let inner = `<div class="titulo-conducto">${prisma} ø${diametro}</div>`;
                 inner += `<div class="grid-tubos" style="grid-template-columns: repeat(${cols}, 1fr);">`;
-                for(let i=1; i<=prisma; i++) inner += `<div class="tubo-ind">${i}</div>`;
+                
+                // ORDENAR DE ABAJO A ARRIBA (Normativa)
+                for (let r = filas - 1; r >= 0; r--) {
+                    for (let c = 0; c < cols; c++) {
+                        let num = r * cols + c + 1;
+                        if (num <= prisma) {
+                            inner += `<div class="tubo-ind">${num}</div>`;
+                        }
+                    }
+                }
+                
                 inner += `</div>`;
                 div.innerHTML = inner;
 
