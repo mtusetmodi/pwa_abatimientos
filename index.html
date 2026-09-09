@@ -47,12 +47,13 @@
         #btn-eliminar { background: #dc3545; } 
         #btn-eliminar:active { background: #c82333; }
 
+        /* PANEL DE CONTROL DE CARA CON COLORES */
         #panel-cara {
-            width: 100%; max-width: 500px; background: #fff3cd; color: #856404; padding: 6px 12px;
+            width: 100%; max-width: 500px; background: #007bff; color: white; padding: 8px 12px;
             display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 14px;
-            border-bottom: 1px solid #ffeeba;
+            transition: background 0.2s ease;
         }
-        #panel-cara select { padding: 4px 8px; font-size: 14px; font-weight: bold; border-radius: 4px; }
+        #panel-cara select { padding: 4px 8px; font-size: 14px; font-weight: bold; border-radius: 4px; border: none; background: white; color: #333; }
 
         #modal-opciones { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 100; align-items: flex-end; justify-content: center; }
         .modal-content { background: white; width: 100%; max-width: 500px; border-radius: 20px 20px 0 0; padding: 20px; max-height: 70vh; overflow-y: auto; }
@@ -65,9 +66,18 @@
             border-radius: 6px; border: 2px solid transparent;
         }
         
-        .elemento-draggable.selected { border-color: #007bff; box-shadow: 0 0 10px rgba(0,123,255,0.5); background: rgba(255, 255, 255, 0.4); z-index: 50;}
+        /* ESTILOS DE SELECCIÓN SEGÚN CARA */
+        .elemento-draggable.selected[data-cara="A"] { border-color: #007bff; box-shadow: 0 0 10px rgba(0, 123, 255, 0.6); background: rgba(0, 123, 255, 0.15); z-index: 50; }
+        .elemento-draggable.selected[data-cara="B"] { border-color: #28a745; box-shadow: 0 0 10px rgba(40, 167, 69, 0.6); background: rgba(40, 167, 69, 0.15); z-index: 50; }
+        .elemento-draggable.selected[data-cara="C"] { border-color: #fd7e14; box-shadow: 0 0 10px rgba(253, 126, 20, 0.6); background: rgba(253, 126, 20, 0.15); z-index: 50; }
+        .elemento-draggable.selected[data-cara="D"] { border-color: #6f42c1; box-shadow: 0 0 10px rgba(111, 66, 193, 0.6); background: rgba(111, 66, 193, 0.15); z-index: 50; }
 
-        .badge-cara { position: absolute; top: -10px; right: -10px; background: #007bff; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        /* BADGES COLOR DE CARA EN CADA ELEMENTO */
+        .badge-cara { position: absolute; top: -8px; right: -8px; color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        .badge-cara[data-cara="A"] { background-color: #007bff; }
+        .badge-cara[data-cara="B"] { background-color: #28a745; }
+        .badge-cara[data-cara="C"] { background-color: #fd7e14; }
+        .badge-cara[data-cara="D"] { background-color: #6f42c1; }
 
         .titulo-conducto { font-weight: bold; font-size: 13px; margin-bottom: 2px; color: #000; text-align: center; }
         .grid-tubos { display: grid; gap: 2px; justify-items: center; }
@@ -88,14 +98,14 @@
         <div id="lienzo"></div>
     </div>
 
-    <!-- Panel de control directo de Cara para el elemento seleccionado -->
+    <!-- Panel Dinámico de Cara -->
     <div id="panel-cara">
         <span>Asignación de Cara:</span>
         <select id="select-cara-elemento" onchange="cambiarCaraSeleccionada(this.value)">
-            <option value="A">CARA A (Arriba)</option>
-            <option value="B">CARA B (Derecha)</option>
-            <option value="C">CARA C (Abajo)</option>
-            <option value="D">CARA D (Izquierda)</option>
+            <option value="A">🟦 CARA A (Arriba)</option>
+            <option value="B">🟩 CARA B (Derecha)</option>
+            <option value="C">🟧 CARA C (Abajo)</option>
+            <option value="D">🟪 CARA D (Izquierda)</option>
         </select>
     </div>
 
@@ -145,6 +155,13 @@
         let elementosSeleccionados = new Set();
         let modoSeleccionMultiple = false;
 
+        const coloresCaras = {
+            'A': '#007bff', // Azul
+            'B': '#28a745', // Verde
+            'C': '#fd7e14', // Naranja
+            'D': '#6f42c1'  // Morado
+        };
+
         const opcionesPredefinidas = [
             { prisma: 1, diametro: 110, cols: 1, label: "1 ø 110" },
             { prisma: 2, diametro: 110, cols: 2, label: "2 ø 110 (2x1)" },
@@ -171,8 +188,17 @@
             elementosSeleccionados.forEach(el => {
                 el.setAttribute('data-cara', nuevaCara);
                 let badge = el.querySelector('.badge-cara');
-                if (badge) badge.innerText = nuevaCara;
+                if (badge) {
+                    badge.innerText = nuevaCara;
+                    badge.setAttribute('data-cara', nuevaCara);
+                }
             });
+            actualizarColorPanelCara(nuevaCara);
+        }
+
+        function actualizarColorPanelCara(cara) {
+            const panel = document.getElementById('panel-cara');
+            panel.style.backgroundColor = coloresCaras[cara] || '#007bff';
         }
 
         function cargarDatosGuardados() {
@@ -222,9 +248,9 @@
                 elementosSeleccionados.add(el);
             }
 
-            // Actualizar el selector de cara en pantalla con la del elemento pinchado
             let caraActual = el.getAttribute('data-cara') || 'A';
             document.getElementById('select-cara-elemento').value = caraActual;
+            actualizarColorPanelCara(caraActual);
         }
 
         lienzo.addEventListener('click', (e) => {
@@ -388,9 +414,10 @@
                 });
             }
 
-            // Etiqueta distintiva de cara
+            // Circulito (Badge) coloreado según la cara
             let badge = document.createElement('div');
             badge.className = 'badge-cara';
+            badge.setAttribute('data-cara', cara || 'A');
             badge.innerText = cara || 'A';
             div.appendChild(badge);
 
@@ -461,7 +488,7 @@
                     cols: el.getAttribute('data-cols'),
                     x: el.getAttribute('data-x'),
                     y: el.getAttribute('data-y'),
-                    cara: el.getAttribute('data-cara') || 'A', // SE GUARDA LA CARA ASIGNADA EXPLÍCITA
+                    cara: el.getAttribute('data-cara') || 'A',
                     rotacion: el.getAttribute('data-rotacion'),
                     escala: el.getAttribute('data-scale')
                 });
