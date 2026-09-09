@@ -95,9 +95,8 @@
     </div>
 
     <script>
-        const urlScript = "https://script.google.com/macros/s/AKfycbzgetL9wcujKF9VIF5VsNPCytAi21s-EeFKPdt-kgpJFIxC7Jb_mku6YRbgE477VOty/exec";
+        const urlScript = "https://script.google.com/macros/s/AKfycbzgetL9wcujKF9VIF5VsNPCytAi21s-EeFKPdt-kgpJFIxC7Jb_mku6YRbgE477VOty/exec"; 
 
-        // Limpieza del parámetro arqueta por si viene con basura de URL
         const urlParams = new URLSearchParams(window.location.search);
         let rawArqueta = urlParams.get('arqueta') || "SIN_ID";
         if (rawArqueta.includes(')')) {
@@ -135,7 +134,23 @@
             cargarDatosGuardados();
         }
 
-        // CARGA AUTOMÁTICA DESDE GOOGLE SHEETS
+        // Determinar automáticamente qué cara (A, B, C o D) corresponde a cada posición de la pantalla
+        function calcularCaraPWA(x, y) {
+            const rect = lienzo.getBoundingClientRect();
+            const centroX = rect.width / 2;
+            const centroY = rect.height / 2;
+
+            const relX = x - centroX;
+            const relY = y - centroY;
+
+            // División por cuadrantes diagonales
+            if (Math.abs(relX) > Math.abs(relY)) {
+                return relX > 0 ? 'B' : 'D'; // Derecha -> B, Izquierda -> D
+            } else {
+                return relY < 0 ? 'A' : 'C'; // Arriba -> A, Abajo -> C
+            }
+        }
+
         function cargarDatosGuardados() {
             if (arquetaId === "SIN_ID") {
                 asegurarCablesTotalesCruz();
@@ -146,7 +161,7 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data && data.elementos && data.elementos.length > 0) {
-                        lienzo.innerHTML = ""; // Limpiar lienzo
+                        lienzo.innerHTML = "";
                         data.elementos.forEach(el => {
                             crearElementoEnDOM(el.tipo, el.texto, parseFloat(el.x), parseFloat(el.y), parseInt(el.prisma), el.diametro, parseFloat(el.rotacion), parseFloat(el.escala), parseInt(el.cols));
                         });
@@ -234,10 +249,14 @@
         document.getElementById('btn-rotar-der').addEventListener('click', () => cambiarRotacionManual(90));
 
         function asegurarCablesTotalesCruz() {
-            crearElementoEnDOM('cables', '(0,0)', 150, 40, 0, 0, 0, 1, 0);  
-            crearElementoEnDOM('cables', '(0,0)', 260, 170, 0, 0, 0, 1, 0); 
-            crearElementoEnDOM('cables', '(0,0)', 150, 310, 0, 0, 0, 1, 0); 
-            crearElementoEnDOM('cables', '(0,0)', 40, 170, 0, 0, 0, 1, 0);  
+            const rect = lienzo.getBoundingClientRect();
+            const cX = rect.width > 0 ? rect.width / 2 - 25 : 150;
+            const cY = rect.height > 0 ? rect.height / 2 - 15 : 150;
+
+            crearElementoEnDOM('cables', '(0,0)', cX, 20, 0, 0, 0, 1, 0);               // Cara A
+            crearElementoEnDOM('cables', '(0,0)', rect.width - 70 || 260, cY, 0, 0, 0, 1, 0); // Cara B
+            crearElementoEnDOM('cables', '(0,0)', cX, rect.height - 40 || 310, 0, 0, 0, 1, 0);// Cara C
+            crearElementoEnDOM('cables', '(0,0)', 20, cY, 0, 0, 0, 1, 0);               // Cara D
             seleccionarElemento(null);
         }
 
@@ -258,7 +277,8 @@
         function seleccionarConductoPorIndice(idx) {
             cerrarModal();
             let opc = opcionesPredefinidas[idx];
-            crearElementoEnDOM('conducto', '', 140, 180, opc.prisma, opc.diametro, 0, 1, opc.cols);
+            const rect = lienzo.getBoundingClientRect();
+            crearElementoEnDOM('conducto', '', rect.width/2 - 20, rect.height/2 - 20, opc.prisma, opc.diametro, 0, 1, opc.cols);
         }
 
         function abrirPersonalizado() {
@@ -266,12 +286,14 @@
             let p = prompt("Nº de Tubos (Prisma):");
             let d = prompt("Diámetro:");
             let c = prompt("Nº de Columnas (ej: 2 o 3):", "2");
-            if(p && d) crearElementoEnDOM('conducto', '', 140, 180, parseInt(p), d, 0, 1, parseInt(c || 2));
+            const rect = lienzo.getBoundingClientRect();
+            if(p && d) crearElementoEnDOM('conducto', '', rect.width/2 - 20, rect.height/2 - 20, parseInt(p), d, 0, 1, parseInt(c || 2));
         }
 
         document.getElementById('btn-add-texto').addEventListener('click', () => {
             let texto = prompt("Escribe tu nota:");
-            if(texto) crearElementoEnDOM('texto', texto, 140, 180, 0, 0, 0, 1, 0);
+            const rect = lienzo.getBoundingClientRect();
+            if(texto) crearElementoEnDOM('texto', texto, rect.width/2 - 20, rect.height/2 - 20, 0, 0, 0, 1, 0);
         });
 
         function renderizarTubosInternos(div, prisma, diametro, cols) {
@@ -392,14 +414,21 @@
             estadoLienzo.elementos = [];
 
             document.querySelectorAll('.elemento-draggable').forEach(el => {
+                let posX = parseFloat(el.getAttribute('data-x')) || 0;
+                let posY = parseFloat(el.getAttribute('data-y')) || 0;
+                
+                // Calculamos la Cara directamente en la PWA
+                let caraCalculada = calcularCaraPWA(posX, posY);
+
                 estadoLienzo.elementos.push({
                     tipo: el.getAttribute('data-tipo'),
                     texto: el.innerText.split('\n')[0],
                     prisma: el.getAttribute('data-prisma'),
                     diametro: el.getAttribute('data-diametro'),
                     cols: el.getAttribute('data-cols'),
-                    x: el.getAttribute('data-x'),
-                    y: el.getAttribute('data-y'),
+                    x: posX,
+                    y: posY,
+                    cara: caraCalculada, // ENVIAMOS LA CARA CALCULADA
                     rotacion: el.getAttribute('data-rotacion'),
                     escala: el.getAttribute('data-scale')
                 });
