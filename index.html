@@ -5,20 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Abatimiento Completo</title>
     <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
-    <!-- Librería para capturar el lienzo como imagen PNG -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         * { box-sizing: border-box; font-family: Arial, sans-serif; user-select: none; }
         body { margin: 0; padding: 0; background-color: #e9ecef; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
         header { width: 100%; display: flex; justify-content: space-between; padding: 12px 16px; background: #343a40; color: white; align-items: center; z-index: 10; position: relative;}
-        header h2 { margin: 0; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 65vw; }
+        header h2 { margin: 0; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60vw; }
         #btn-guardar { background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; font-size: 15px;}
         
+        #banner-estado {
+            width: 100%; max-width: 500px; padding: 6px; text-align: center; font-size: 12px; font-weight: bold;
+            display: none; color: white; transition: all 0.3s ease;
+        }
+
         #contenedor-lienzo {
             width: 100vw;
             max-width: 500px;
-            height: 52vh;
-            max-height: 500px;
+            height: 54vh;
+            max-height: 520px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -48,13 +52,6 @@
         
         #btn-eliminar { background: #dc3545; } 
         #btn-eliminar:active { background: #c82333; }
-
-        #panel-cara {
-            width: 100%; max-width: 500px; background: #007bff; color: white; padding: 8px 12px;
-            display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 14px;
-            transition: background 0.2s ease;
-        }
-        #panel-cara select { padding: 4px 8px; font-size: 14px; font-weight: bold; border-radius: 4px; border: none; background: white; color: #333; }
 
         #modal-opciones { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 100; align-items: flex-end; justify-content: center; }
         .modal-content { background: white; width: 100%; max-width: 500px; border-radius: 20px 20px 0 0; padding: 20px; max-height: 70vh; overflow-y: auto; }
@@ -93,18 +90,10 @@
         <button id="btn-guardar">GUARDAR</button>
     </header>
 
+    <div id="banner-estado"></div>
+
     <div id="contenedor-lienzo">
         <div id="lienzo"></div>
-    </div>
-
-    <div id="panel-cara">
-        <span>Asignación de Cara:</span>
-        <select id="select-cara-elemento" onchange="cambiarCaraSeleccionada(this.value)">
-            <option value="A">🟦 CARA A (Arriba)</option>
-            <option value="B">🟩 CARA B (Derecha)</option>
-            <option value="C">🟧 CARA C (Abajo)</option>
-            <option value="D">🟪 CARA D (Izquierda)</option>
-        </select>
     </div>
 
     <div class="controles">
@@ -153,13 +142,6 @@
         let elementosSeleccionados = new Set();
         let modoSeleccionMultiple = false;
 
-        const coloresCaras = {
-            'A': '#007bff',
-            'B': '#28a745',
-            'C': '#fd7e14',
-            'D': '#6f42c1'
-        };
-
         const opcionesPredefinidas = [
             { prisma: 1, diametro: 110, cols: 1, label: "1 ø 110" },
             { prisma: 2, diametro: 110, cols: 2, label: "2 ø 110 (2x1)" },
@@ -180,31 +162,60 @@
         function inicializar() { 
             renderizarListaConductos(); 
             cargarDatosGuardados();
+            sincronizarPendientesOffline();
         }
 
-        function cambiarCaraSeleccionada(nuevaCara) {
-            elementosSeleccionados.forEach(el => {
-                el.setAttribute('data-cara', nuevaCara);
-                let badge = el.querySelector('.badge-cara');
-                if (badge) {
-                    badge.innerText = nuevaCara;
-                    badge.setAttribute('data-cara', nuevaCara);
-                }
-            });
-            actualizarColorPanelCara(nuevaCara);
+        // CÁLCULO AUTOMÁTICO DE LA CARA SEGÚN LA POSICIÓN EN LA CRUZ
+        function calcularCaraPorPosicion(x, y) {
+            const rect = lienzo.getBoundingClientRect();
+            const relX = x / (rect.width || 300);
+            const relY = y / (rect.height || 300);
+
+            if (relY < 0.35) return 'A';         // Zona Superior -> CARA A
+            if (relY > 0.65) return 'C';         // Zona Inferior -> CARA C
+            if (relX > 0.60) return 'B';         // Zona Derecha -> CARA B
+            if (relX < 0.40) return 'D';         // Zona Izquierda -> CARA D
+            return 'A'; // Por defecto
         }
 
-        function actualizarColorPanelCara(cara) {
-            const panel = document.getElementById('panel-cara');
-            panel.style.backgroundColor = coloresCaras[cara] || '#007bff';
+        function actualizarCaraDeElemento(el) {
+            let x = parseFloat(el.getAttribute('data-x')) || 0;
+            let y = parseFloat(el.getAttribute('data-y')) || 0;
+            let caraAuto = calcularCaraPorPosicion(x, y);
+
+            el.setAttribute('data-cara', caraAuto);
+            let badge = el.querySelector('.badge-cara');
+            if (badge) {
+                badge.innerText = caraAuto;
+                badge.setAttribute('data-cara', caraAuto);
+            }
         }
 
+        // PERSISTENCIA: CARGA DESDE MEMORIA LOCAL O GOOGLE SHEETS
         function cargarDatosGuardados() {
             if (arquetaId === "SIN_ID") {
                 asegurarCablesTotalesCruz();
                 return;
             }
 
+            // 1. Verificar si hay un guardado local más reciente
+            let localData = localStorage.getItem(`arqueta_${arquetaId}`);
+            if (localData) {
+                try {
+                    let parsed = JSON.parse(localData);
+                    if (parsed && parsed.elementos && parsed.elementos.length > 0) {
+                        lienzo.innerHTML = "";
+                        parsed.elementos.forEach(el => {
+                            crearElementoEnDOM(el.tipo, el.texto, parseFloat(el.x), parseFloat(el.y), parseInt(el.prisma), el.diametro, parseFloat(el.rotacion), parseFloat(el.escala), parseInt(el.cols), el.cara);
+                        });
+                        seleccionarElemento(null);
+                        mostrarBanner("📦 Cargado desde copia local reciente", "#17a2b8");
+                        return;
+                    }
+                } catch(e) {}
+            }
+
+            // 2. Si no hay local o falló, cargar desde Google Sheets
             fetch(`${urlScript}?arqueta=${encodeURIComponent(arquetaId)}`)
                 .then(response => response.json())
                 .then(data => {
@@ -245,10 +256,6 @@
                 el.classList.add('selected');
                 elementosSeleccionados.add(el);
             }
-
-            let caraActual = el.getAttribute('data-cara') || 'A';
-            document.getElementById('select-cara-elemento').value = caraActual;
-            actualizarColorPanelCara(caraActual);
         }
 
         lienzo.addEventListener('click', (e) => {
@@ -331,8 +338,8 @@
             cerrarModal();
             let opc = opcionesPredefinidas[idx];
             const rect = lienzo.getBoundingClientRect();
-            let caraActual = document.getElementById('select-cara-elemento').value || 'A';
-            crearElementoEnDOM('conducto', '', rect.width/2 - 25, rect.height/2 - 25, opc.prisma, opc.diametro, 0, 1, opc.cols, caraActual);
+            let caraAuto = calcularCaraPorPosicion(rect.width/2 - 25, rect.height/2 - 25);
+            crearElementoEnDOM('conducto', '', rect.width/2 - 25, rect.height/2 - 25, opc.prisma, opc.diametro, 0, 1, opc.cols, caraAuto);
         }
 
         function abrirPersonalizado() {
@@ -341,15 +348,15 @@
             let d = prompt("Diámetro:");
             let c = prompt("Nº de Columnas (ej: 2 o 3):", "2");
             const rect = lienzo.getBoundingClientRect();
-            let caraActual = document.getElementById('select-cara-elemento').value || 'A';
-            if(p && d) crearElementoEnDOM('conducto', '', rect.width/2 - 25, rect.height/2 - 25, parseInt(p), d, 0, 1, parseInt(c || 2), caraActual);
+            let caraAuto = calcularCaraPorPosicion(rect.width/2 - 25, rect.height/2 - 25);
+            if(p && d) crearElementoEnDOM('conducto', '', rect.width/2 - 25, rect.height/2 - 25, parseInt(p), d, 0, 1, parseInt(c || 2), caraAuto);
         }
 
         document.getElementById('btn-add-texto').addEventListener('click', () => {
             let texto = prompt("Escribe tu nota:");
             const rect = lienzo.getBoundingClientRect();
-            let caraActual = document.getElementById('select-cara-elemento').value || 'A';
-            if(texto) crearElementoEnDOM('texto', texto, rect.width/2 - 25, rect.height/2 - 25, 0, 0, 0, 1, 0, caraActual);
+            let caraAuto = calcularCaraPorPosicion(rect.width/2 - 25, rect.height/2 - 25);
+            if(texto) crearElementoEnDOM('texto', texto, rect.width/2 - 25, rect.height/2 - 25, 0, 0, 0, 1, 0, caraAuto);
         });
 
         function renderizarTubosInternos(div, prisma, diametro, cols) {
@@ -384,7 +391,9 @@
             div.setAttribute('data-rotacion', rotacion);
             div.setAttribute('data-scale', escala);
             div.setAttribute('data-cols', cols || 2);
-            div.setAttribute('data-cara', cara || 'A');
+            
+            let caraCalculada = cara || calcularCaraPorPosicion(x, y);
+            div.setAttribute('data-cara', caraCalculada);
 
             div.style.transform = `translate(${x}px, ${y}px) rotate(${rotacion}deg) scale(${escala})`;
 
@@ -415,8 +424,8 @@
 
             let badge = document.createElement('div');
             badge.className = 'badge-cara';
-            badge.setAttribute('data-cara', cara || 'A');
-            badge.innerText = cara || 'A';
+            badge.setAttribute('data-cara', caraCalculada);
+            badge.innerText = caraCalculada;
             div.appendChild(badge);
 
             lienzo.appendChild(div);
@@ -447,6 +456,9 @@
                             el.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg) scale(${scale})`;
                             el.setAttribute('data-x', x);
                             el.setAttribute('data-y', y);
+
+                            // Actualizar asignación automática de cara al arrastrar
+                            actualizarCaraDeElemento(el);
                         });
                     }
                 }
@@ -474,12 +486,19 @@
                 }
             });
 
-        // CAPTURA VISUAL DE LA IMAGEN CON HTML2CANVAS
+        function mostrarBanner(mensaje, colorBg) {
+            const banner = document.getElementById('banner-estado');
+            banner.innerText = mensaje;
+            banner.style.backgroundColor = colorBg;
+            banner.style.display = 'block';
+            setTimeout(() => { banner.style.display = 'none'; }, 4000);
+        }
+
+        // GUARDADO CON SOPORTE OFFLINE Y CAPTURA DE IMAGEN
         document.getElementById('btn-guardar').addEventListener('click', () => {
             let btn = document.getElementById('btn-guardar');
             btn.innerText = "Capturando...";
 
-            // Deseleccionar temporalmente para no incluir bordes azules en la foto
             seleccionarElemento(null);
 
             html2canvas(lienzo, { useCORS: true, scale: 2 }).then(canvas => {
@@ -503,22 +522,72 @@
                     });
                 });
 
+                // 1. Guardar en memoria del móvil de inmediato
+                localStorage.setItem(`arqueta_${arquetaId}`, JSON.stringify(estadoLienzo));
+
                 btn.innerText = "Guardando...";
 
+                // 2. Si no hay conexión a internet
+                if (!navigator.onLine) {
+                    guardarEnColaOffline(estadoLienzo);
+                    alert("⚠️ Sin conexión a internet. El abatimiento ha quedado guardado localmente en tu móvil. Se subirá a Google Sheets automáticamente al recuperar la cobertura.");
+                    btn.innerText = "GUARDAR";
+                    return;
+                }
+
+                // 3. Enviar a Google Apps Script
                 fetch(urlScript, {
                     method: 'POST',
                     mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(estadoLienzo)
                 }).then(() => {
-                    alert("¡Abatimiento e imagen guardados correctamente!");
+                    alert("¡Abatimiento guardado correctamente en Google Sheets!");
                     btn.innerText = "GUARDAR";
                 }).catch(err => {
-                    alert("Error de conexión al guardar.");
+                    guardarEnColaOffline(estadoLienzo);
+                    alert("⚠️ Error al conectar con el servidor. El abatimiento se guardó localmente en el móvil.");
                     btn.innerText = "GUARDAR";
                 });
             });
         });
+
+        // GESTIÓN DE COLA OFFLINE Y RECONEXIÓN AUTOMÁTICA
+        function guardarEnColaOffline(datos) {
+            let cola = JSON.parse(localStorage.getItem('cola_pendientes_arqueta') || '[]');
+            // Reemplazar si ya existía en la cola
+            cola = cola.filter(item => item.id_arqueta !== datos.id_arqueta);
+            cola.push(datos);
+            localStorage.setItem('cola_pendientes_arqueta', JSON.stringify(cola));
+            mostrarBanner("⚠️ Guardado localmente sin conexión", "#ffc107");
+        }
+
+        function sincronizarPendientesOffline() {
+            if (!navigator.onLine) return;
+
+            let cola = JSON.parse(localStorage.getItem('cola_pendientes_arqueta') || '[]');
+            if (cola.length === 0) return;
+
+            mostrarBanner(`🔄 Sincronizando ${cola.length} abatimiento(s) pendiente(s)...`, "#17a2b8");
+
+            let promesas = cola.map(datos => {
+                return fetch(urlScript, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(datos)
+                });
+            });
+
+            Promise.all(promesas).then(() => {
+                localStorage.removeItem('cola_pendientes_arqueta');
+                mostrarBanner("✅ ¡Todos los abatimientos pendientes se han subido a Google Sheets!", "#28a745");
+            }).catch(err => {
+                console.error("Error al sincronizar cola offline:", err);
+            });
+        }
+
+        window.addEventListener('online', sincronizarPendientesOffline);
 
         inicializar();
     </script>
