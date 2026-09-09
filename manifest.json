@@ -1,21 +1,14 @@
 {
-  "name": "Abatimientos Arquetas",
-  "short_name": "Abatimientos",
-  "description": "App táctil para dibujar abatimientos en campo",
-  "start_url": "./",
+  "name": "Abatiment Arquetas",
+  "short_name": "Abatiment",
+  "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f4f4f4",
-  "theme_color": "#333333",
-  "orientation": "portrait",
+  "background_color": "#343a40",
+  "theme_color": "#343a40",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "plantilla_cruz.png",
       "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
       "type": "image/png"
     }
   ]
