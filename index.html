@@ -298,22 +298,22 @@
         document.getElementById('btn-rotar-izq').addEventListener('click', () => cambiarRotacionManual(-90));
         document.getElementById('btn-rotar-der').addEventListener('click', () => cambiarRotacionManual(90));
 
-        // COORDENADAS PERFECTAMENTE AJUSTADAS A CADA RECUADRO REAL
+        // CENTRADO DEFINITIVO DE CADA CAJETÍN
         function asegurarCablesTotalesCruz() {
             const rect = lienzo.getBoundingClientRect();
             const w = rect.width || 300;
             const h = rect.height || 300;
 
-            // CARA A: Centrada en la franja blanca debajo de CARA A
-            crearElementoEnDOM('cables', '(0,0)', w * 0.44, h * 0.115, 0, 0, 0, 1, 0, 'A');
+            // CARA A: Centrado en la casilla inferior a CARA A
+            crearElementoEnDOM('cables', '(0,0)', w * 0.44, h * 0.125, 0, 0, 0, 1, 0, 'A');
             
-            // CARA B: Centrada en el recuadro vertical derecho
-            crearElementoEnDOM('cables', '(0,0)', w * 0.755, h * 0.50, 0, 0, 90, 1, 0, 'B'); 
+            // CARA B: Centrado exacto en el recuadro vertical derecho
+            crearElementoEnDOM('cables', '(0,0)', w * 0.785, h * 0.50, 0, 0, 90, 1, 0, 'B'); 
             
-            // CARA C: Centrada en la franja blanca encima de CARA C
+            // CARA C: Centrado en la casilla superior a CARA C
             crearElementoEnDOM('cables', '(0,0)', w * 0.44, h * 0.88, 0, 0, 0, 1, 0, 'C'); 
             
-            // CARA D: Centrada en el recuadro vertical izquierdo
+            // CARA D: Centrado exacto en el recuadro vertical izquierdo
             crearElementoEnDOM('cables', '(0,0)', w * 0.12, h * 0.50, 0, 0, 90, 1, 0, 'D'); 
 
             seleccionarElemento(null);
