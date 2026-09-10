@@ -302,11 +302,10 @@
             btnMulti.innerText = modoSeleccionMultiple ? '☑️ Sel. Múltiple' : '☐ Sel. Múltiple';
         });
 
+        // BOTÓN ELIMINAR SIN RESTRICCIONES (BORRA CUALQUIER ELEMENTO SELECCIONADO)
         document.getElementById('btn-eliminar').addEventListener('click', () => {
             elementosSeleccionados.forEach(el => {
-                if (el.getAttribute('data-tipo') !== 'cables') {
-                    el.remove();
-                }
+                el.remove();
             });
             elementosSeleccionados.clear();
         });
@@ -344,7 +343,6 @@
         document.getElementById('btn-rotar-izq').addEventListener('click', () => cambiarRotacionManual(-90));
         document.getElementById('btn-rotar-der').addEventListener('click', () => cambiarRotacionManual(90));
 
-        // CARA D INVERTIDA A -90 GRADOS
         function asegurarCablesTotalesCruz() {
             const rect = lienzo.getBoundingClientRect();
             const w = rect.width || 300;
@@ -364,7 +362,6 @@
             crearElementoEnDOM('cables', '(0,0)', posA.x, posA.y, 0, 0, 0, 1, 0, 'A');
             crearElementoEnDOM('cables', '(0,0)', posB.x, posB.y, 0, 0, 90, 1, 0, 'B'); 
             crearElementoEnDOM('cables', '(0,0)', posC.x, posC.y, 0, 0, 0, 1, 0, 'C'); 
-            // CARA D: Rotación cambiada a -90 para orientar el texto hacia arriba
             crearElementoEnDOM('cables', '(0,0)', posD.x, posD.y, 0, 0, -90, 1, 0, 'D'); 
 
             seleccionarElemento(null);
