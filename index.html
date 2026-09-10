@@ -25,8 +25,8 @@
         #contenedor-lienzo {
             width: 100vw;
             max-width: 500px;
-            height: 46vh;
-            max-height: 460px;
+            height: 44vh;
+            max-height: 440px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -50,24 +50,20 @@
         .controles { width: 100%; max-width: 500px; display: flex; justify-content: space-around; padding: 6px 8px; background: #fff; }
         .controles button { padding: 9px; font-size: 14px; background: #007bff; color: white; border: none; border-radius: 8px; width: 48%; font-weight: bold;}
         
-        /* BLOQUE DE HERRAMIENTAS REESTRUCTURADO SEGÚN LA IMAGEN */
+        /* ESTRUCTURA EXACTA EN 3 FILAS DE 2 BOTONES */
         .bloque-herramientas {
-            width: 100%; max-width: 500px; background: #f8f9fa; border-top: 1px solid #ddd; padding: 6px 8px; display: flex; flex-direction: column; gap: 6px;
+            width: 100%; max-width: 500px; background: #f8f9fa; border-top: 1px solid #ddd; padding: 6px 8px; display: flex; flex-direction: column; gap: 5px;
         }
         
         .fila-herramientas {
             display: flex; justify-content: space-between; width: 100%; gap: 10px;
         }
 
-        .grupo-botones {
-            display: flex; gap: 4px; width: 48%;
-        }
-
-        .grupo-botones button, .fila-herramientas button.btn-ancho {
+        .fila-herramientas button {
             flex: 1; padding: 8px 2px; font-size: 12px; font-weight: bold; border: none; border-radius: 8px; color: white; background: #6c757d; text-align: center;
         }
 
-        .grupo-botones button:active, .fila-herramientas button.btn-ancho:active {
+        .fila-herramientas button:active {
             background: #5a6268;
         }
 
@@ -142,27 +138,22 @@
         <button id="btn-add-texto">+ Texto / Nota</button>
     </div>
 
-    <!-- ESTRUCTURA REORGANIZADA DE HERRAMIENTAS -->
+    <!-- BLOQUE DE 3 FILAS X 2 BOTONES DE HERRAMIENTAS -->
     <div class="bloque-herramientas">
-        <!-- FILA SUPERIOR: GIRAR A LA IZQUIERDA Y ZOOM A LA DERECHA -->
+        <!-- FILA 1: GIRAR IZQ | ZOOM IN -->
         <div class="fila-herramientas">
-            <div class="grupo-botones">
-                <button id="btn-rotar-izq">↺ Girar</button>
-                <button id="btn-rotar-der">↻ Girar</button>
-            </div>
-            <div class="grupo-botones">
-                <button id="btn-zoom-out">➖ Zoom</button>
-                <button id="btn-zoom-in">➕ Zoom</button>
-            </div>
+            <button id="btn-rotar-izq">↺ Girar</button>
+            <button id="btn-zoom-in">➕ Zoom</button>
         </div>
-        <!-- FILA INFERIOR: SEL. MÚLTIPLE A LA IZQUIERDA Y BORRAR A LA DERECHA -->
+        <!-- FILA 2: GIRAR DER | ZOOM OUT -->
         <div class="fila-herramientas">
-            <div class="grupo-botones">
-                <button id="btn-multi" class="btn-ancho">☐ Sel. Múltiple</button>
-            </div>
-            <div class="grupo-botones">
-                <button id="btn-eliminar" class="btn-ancho">🗑️ Borrar</button>
-            </div>
+            <button id="btn-rotar-der">↻ Girar</button>
+            <button id="btn-zoom-out">➖ Zoom</button>
+        </div>
+        <!-- FILA 3: SEL. MÚLTIPLE | BORRAR -->
+        <div class="fila-herramientas">
+            <button id="btn-multi">☐ Sel. Múltiple</button>
+            <button id="btn-eliminar">🗑️ Borrar</button>
         </div>
     </div>
 
