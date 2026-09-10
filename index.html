@@ -25,8 +25,8 @@
         #contenedor-lienzo {
             width: 100vw;
             max-width: 500px;
-            height: 50vh;
-            max-height: 500px;
+            height: 48vh;
+            max-height: 480px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -57,13 +57,30 @@
         #btn-eliminar { background: #dc3545; } 
         #btn-eliminar:active { background: #c82333; }
         
-        /* PANEL ÚNICO EN 1 SOLA FILA PARA (0,0) */
+        /* PANEL OPTIMIZADO DE BOTONES (0,0) */
         .seccion-cables {
             width: 100%; max-width: 500px; background: #e9ecef; border-top: 2px solid #ced4da; padding: 4px 6px; display: flex; flex-direction: column; gap: 3px;
         }
-        .seccion-titulo { font-size: 11px; font-weight: bold; color: #495057; text-align: center; text-transform: uppercase; }
+        .seccion-titulo { font-size: 10px; font-weight: bold; color: #495057; text-align: center; text-transform: uppercase; }
         .fila-botones-unica { display: flex; gap: 3px; justify-content: space-between; width: 100%; }
-        .fila-botones-unica button { flex: 1; padding: 7px 1px; font-size: 10px; font-weight: bold; border: none; border-radius: 6px; color: white; text-align: center; white-space: nowrap; }
+        
+        /*Permite salto de línea en el texto del botón y centra el contenido de forma legible*/
+        .fila-botones-unica button { 
+            flex: 1; 
+            padding: 6px 2px; 
+            font-size: 9px; 
+            font-weight: bold; 
+            border: none; 
+            border-radius: 6px; 
+            color: white; 
+            text-align: center; 
+            white-space: normal; 
+            line-height: 1.15;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 38px;
+        }
 
         #btn-toggle-cables { background: #6f42c1; }
         #btn-unlock-cables { background: #fd7e14; }
@@ -118,14 +135,14 @@
         <button id="btn-multi">☐ Sel. Múltiple</button>
     </div>
 
-    <!-- LAS 4 OPCIONES EN 1 SOLA FILA -->
+    <!-- LAS 4 OPCIONES CON TEXTO COMPACTO EN 2 LÍNEAS INTERNAS -->
     <div class="seccion-cables">
         <div class="seccion-titulo">Ajuste y Control de Etiquetas (0,0)</div>
         <div class="fila-botones-unica">
-            <button id="btn-toggle-cables">👁️ Ocultar los (0,0)</button>
-            <button id="btn-unlock-cables"> Mover los (0,0)</button>
-            <button id="btn-lock-local">📍 Fijar los (0,0) solo esta ARQUETA</button>
-            <button id="btn-lock-global">FIJAR posición de Todas</button>
+            <button id="btn-toggle-cables">👁️ Ocultar<br>(0,0)</button>
+            <button id="btn-unlock-cables">🔓 Mover<br>(0,0)</button>
+            <button id="btn-lock-local">📍 Fijar Solo<br>Esta Arqueta</button>
+            <button id="btn-lock-global">🌐 Fijar Posición<br>de Todas</button>
         </div>
     </div>
 
@@ -193,11 +210,11 @@
             cablesBloqueados = !cablesBloqueados;
             const btn = document.getElementById('btn-unlock-cables');
             if (!cablesBloqueados) {
-                btn.innerText = "🔒 Bloquear";
+                btn.innerHTML = "🔒 Bloquear<br>Movimiento";
                 btn.style.backgroundColor = "#28a745";
                 mostrarBanner("🔓 (0,0) Desbloqueados: Muévelos con el dedo a la posición deseada", "#ffc107");
             } else {
-                btn.innerText = "🔓 Mover (0,0)";
+                btn.innerHTML = "🔓 Mover<br>(0,0)";
                 btn.style.backgroundColor = "#fd7e14";
                 mostrarBanner("🔒 Posiciones de (0,0) bloqueadas contra movimientos accidentales", "#28a745");
             }
@@ -206,7 +223,7 @@
         document.getElementById('btn-lock-local').addEventListener('click', () => {
             guardarPosicionesFijasCables('local');
             cablesBloqueados = true;
-            document.getElementById('btn-unlock-cables').innerText = "🔓 Mover (0,0)";
+            document.getElementById('btn-unlock-cables').innerHTML = "🔓 Mover<br>(0,0)";
             document.getElementById('btn-unlock-cables').style.backgroundColor = "#fd7e14";
             mostrarBanner("📍 Posición (0,0) guardada SOLO para " + arquetaId, "#17a2b8");
         });
@@ -214,7 +231,7 @@
         document.getElementById('btn-lock-global').addEventListener('click', () => {
             guardarPosicionesFijasCables('global');
             cablesBloqueados = true;
-            document.getElementById('btn-unlock-cables').innerText = "🔓 Mover (0,0)";
+            document.getElementById('btn-unlock-cables').innerHTML = "🔓 Mover<br>(0,0)";
             document.getElementById('btn-unlock-cables').style.backgroundColor = "#fd7e14";
             mostrarBanner("🌐 Posición (0,0) guardada para TODAS las arquetas", "#28a745");
         });
@@ -226,7 +243,7 @@
             
             if (!cablesVisibles) {
                 elementosCables.forEach(el => el.style.display = 'none');
-                btnToggleCables.innerText = "👁️ Mostrar (0,0)";
+                btnToggleCables.innerHTML = "👁️ Mostrar<br>(0,0)";
                 btnToggleCables.style.backgroundColor = "#6c757d";
                 mostrarBanner("🙈 Se han ocultado los (0,0) en este abatimiento", "#6c757d");
             } else {
@@ -235,7 +252,7 @@
                 } else {
                     elementosCables.forEach(el => el.style.display = 'flex');
                 }
-                btnToggleCables.innerText = "👁️ Ocultar (0,0)";
+                btnToggleCables.innerHTML = "👁️ Ocultar<br>(0,0)";
                 btnToggleCables.style.backgroundColor = "#6f42c1";
                 mostrarBanner("👁️ Visibles los (0,0)", "#6f42c1");
             }
