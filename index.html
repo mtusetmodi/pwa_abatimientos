@@ -25,8 +25,8 @@
         #contenedor-lienzo {
             width: 100vw;
             max-width: 500px;
-            height: 48vh;
-            max-height: 480px;
+            height: 50vh;
+            max-height: 500px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -57,18 +57,18 @@
         #btn-eliminar { background: #dc3545; } 
         #btn-eliminar:active { background: #c82333; }
         
-        /* SECCIÓN ESPECÍFICA DE CONTROL (0,0) */
+        /* PANEL ÚNICO EN 1 SOLA FILA PARA (0,0) */
         .seccion-cables {
-            width: 100%; max-width: 500px; background: #e9ecef; border-top: 2px solid #ced4da; padding: 4px 6px; display: flex; flex-direction: column; gap: 4px;
+            width: 100%; max-width: 500px; background: #e9ecef; border-top: 2px solid #ced4da; padding: 4px 6px; display: flex; flex-direction: column; gap: 3px;
         }
         .seccion-titulo { font-size: 11px; font-weight: bold; color: #495057; text-align: center; text-transform: uppercase; }
-        .fila-botones { display: flex; gap: 4px; justify-content: space-between; }
-        .fila-botones button { flex: 1; padding: 6px 2px; font-size: 11px; font-weight: bold; border: none; border-radius: 6px; color: white; text-align: center; }
+        .fila-botones-unica { display: flex; gap: 3px; justify-content: space-between; width: 100%; }
+        .fila-botones-unica button { flex: 1; padding: 7px 1px; font-size: 10px; font-weight: bold; border: none; border-radius: 6px; color: white; text-align: center; white-space: nowrap; }
 
         #btn-toggle-cables { background: #6f42c1; }
+        #btn-unlock-cables { background: #fd7e14; }
         #btn-lock-local { background: #17a2b8; }
         #btn-lock-global { background: #28a745; }
-        #btn-unlock-cables { background: #fd7e14; }
 
         #modal-opciones { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 100; align-items: flex-end; justify-content: center; }
         .modal-content { background: white; width: 100%; max-width: 500px; border-radius: 20px 20px 0 0; padding: 20px; max-height: 70vh; overflow-y: auto; }
@@ -118,16 +118,14 @@
         <button id="btn-multi">☐ Sel. Múltiple</button>
     </div>
 
-    <!-- PANEL DE CONTROL CLARO PARA ETIQUETAS (0,0) -->
+    <!-- LAS 4 OPCIONES EN 1 SOLA FILA -->
     <div class="seccion-cables">
         <div class="seccion-titulo">Ajuste y Control de Etiquetas (0,0)</div>
-        <div class="fila-botones">
+        <div class="fila-botones-unica">
             <button id="btn-toggle-cables">👁️ Ocultar (0,0)</button>
             <button id="btn-unlock-cables">🔓 Mover (0,0)</button>
-        </div>
-        <div class="fila-botones">
-            <button id="btn-lock-local">📍 Fijar Solo Esta Arqueta</button>
-            <button id="btn-lock-global">🌐 Fijar Todas las Arquetas</button>
+            <button id="btn-lock-local">📍 Solo Esta</button>
+            <button id="btn-lock-global">🌐 Todas</button>
         </div>
     </div>
 
@@ -191,40 +189,36 @@
             sincronizarPendientesOffline();
         }
 
-        // DESBLOQUEAR PARA MOVER CON EL DEDO
         document.getElementById('btn-unlock-cables').addEventListener('click', () => {
             cablesBloqueados = !cablesBloqueados;
             const btn = document.getElementById('btn-unlock-cables');
             if (!cablesBloqueados) {
-                btn.innerText = "🔒 Bloquear Movimiento";
+                btn.innerText = "🔒 Bloquear";
                 btn.style.backgroundColor = "#28a745";
-                mostrarBanner("🔓 (0,0) Desbloqueados: Muévelos a la posición que quieras con el dedo", "#ffc107");
+                mostrarBanner("🔓 (0,0) Desbloqueados: Muévelos con el dedo a la posición deseada", "#ffc107");
             } else {
                 btn.innerText = "🔓 Mover (0,0)";
                 btn.style.backgroundColor = "#fd7e14";
-                mostrarBanner("🔒 Posiciones de (0,0) bloqueadas contra arrastres accidentales", "#28a745");
+                mostrarBanner("🔒 Posiciones de (0,0) bloqueadas contra movimientos accidentales", "#28a745");
             }
         });
 
-        // FIJAR POSICIÓN SOLO EN ESTA ARQUETA
         document.getElementById('btn-lock-local').addEventListener('click', () => {
             guardarPosicionesFijasCables('local');
             cablesBloqueados = true;
             document.getElementById('btn-unlock-cables').innerText = "🔓 Mover (0,0)";
             document.getElementById('btn-unlock-cables').style.backgroundColor = "#fd7e14";
-            mostrarBanner("📍 Posición (0,0) guardada SOLO para la arqueta " + arquetaId, "#17a2b8");
+            mostrarBanner("📍 Posición (0,0) guardada SOLO para " + arquetaId, "#17a2b8");
         });
 
-        // FIJAR POSICIÓN EN TODAS LAS ARQUETAS
         document.getElementById('btn-lock-global').addEventListener('click', () => {
             guardarPosicionesFijasCables('global');
             cablesBloqueados = true;
             document.getElementById('btn-unlock-cables').innerText = "🔓 Mover (0,0)";
             document.getElementById('btn-unlock-cables').style.backgroundColor = "#fd7e14";
-            mostrarBanner("🌐 Posición (0,0) guardada para TODAS las arquetas del proyecto", "#28a745");
+            mostrarBanner("🌐 Posición (0,0) guardada para TODAS las arquetas", "#28a745");
         });
 
-        // MOSTRAR U OCULTAR (0,0)
         const btnToggleCables = document.getElementById('btn-toggle-cables');
         btnToggleCables.addEventListener('click', () => {
             cablesVisibles = !cablesVisibles;
