@@ -25,8 +25,8 @@
         #contenedor-lienzo {
             width: 100vw;
             max-width: 500px;
-            height: 48vh;
-            max-height: 480px;
+            height: 46vh;
+            max-height: 460px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -50,21 +50,37 @@
         .controles { width: 100%; max-width: 500px; display: flex; justify-content: space-around; padding: 6px 8px; background: #fff; }
         .controles button { padding: 9px; font-size: 14px; background: #007bff; color: white; border: none; border-radius: 8px; width: 48%; font-weight: bold;}
         
-        .herramientas { width: 100%; max-width: 500px; display: flex; justify-content: space-between; gap: 4px; padding: 4px 8px; background: #f8f9fa; border-top: 1px solid #ddd; }
-        .herramientas button { flex: 1; padding: 7px 2px; font-size: 12px; background: #6c757d; color: white; border: none; border-radius: 6px; font-weight: bold; text-align: center;}
-        .herramientas button:active { background: #5a6268; }
+        /* BLOQUE DE HERRAMIENTAS REESTRUCTURADO SEGÚN LA IMAGEN */
+        .bloque-herramientas {
+            width: 100%; max-width: 500px; background: #f8f9fa; border-top: 1px solid #ddd; padding: 6px 8px; display: flex; flex-direction: column; gap: 6px;
+        }
         
+        .fila-herramientas {
+            display: flex; justify-content: space-between; width: 100%; gap: 10px;
+        }
+
+        .grupo-botones {
+            display: flex; gap: 4px; width: 48%;
+        }
+
+        .grupo-botones button, .fila-herramientas button.btn-ancho {
+            flex: 1; padding: 8px 2px; font-size: 12px; font-weight: bold; border: none; border-radius: 8px; color: white; background: #6c757d; text-align: center;
+        }
+
+        .grupo-botones button:active, .fila-herramientas button.btn-ancho:active {
+            background: #5a6268;
+        }
+
         #btn-eliminar { background: #dc3545; } 
         #btn-eliminar:active { background: #c82333; }
         
-        /* PANEL OPTIMIZADO DE BOTONES (0,0) */
+        /* PANEL DE CONTROL (0,0) */
         .seccion-cables {
             width: 100%; max-width: 500px; background: #e9ecef; border-top: 2px solid #ced4da; padding: 4px 6px; display: flex; flex-direction: column; gap: 3px;
         }
         .seccion-titulo { font-size: 10px; font-weight: bold; color: #495057; text-align: center; text-transform: uppercase; }
         .fila-botones-unica { display: flex; gap: 3px; justify-content: space-between; width: 100%; }
         
-        /*Permite salto de línea en el texto del botón y centra el contenido de forma legible*/
         .fila-botones-unica button { 
             flex: 1; 
             padding: 6px 2px; 
@@ -126,16 +142,30 @@
         <button id="btn-add-texto">+ Texto / Nota</button>
     </div>
 
-    <div class="herramientas">
-        <button id="btn-zoom-out">➖ Zoom</button>
-        <button id="btn-zoom-in">➕ Zoom</button>
-        <button id="btn-rotar-izq">↺ Girar</button>
-        <button id="btn-rotar-der">↻ Girar</button>
-        <button id="btn-eliminar">🗑️ Borrar</button>
-        <button id="btn-multi">☐ Sel. Múltiple</button>
+    <!-- ESTRUCTURA REORGANIZADA DE HERRAMIENTAS -->
+    <div class="bloque-herramientas">
+        <!-- FILA SUPERIOR: GIRAR A LA IZQUIERDA Y ZOOM A LA DERECHA -->
+        <div class="fila-herramientas">
+            <div class="grupo-botones">
+                <button id="btn-rotar-izq">↺ Girar</button>
+                <button id="btn-rotar-der">↻ Girar</button>
+            </div>
+            <div class="grupo-botones">
+                <button id="btn-zoom-out">➖ Zoom</button>
+                <button id="btn-zoom-in">➕ Zoom</button>
+            </div>
+        </div>
+        <!-- FILA INFERIOR: SEL. MÚLTIPLE A LA IZQUIERDA Y BORRAR A LA DERECHA -->
+        <div class="fila-herramientas">
+            <div class="grupo-botones">
+                <button id="btn-multi" class="btn-ancho">☐ Sel. Múltiple</button>
+            </div>
+            <div class="grupo-botones">
+                <button id="btn-eliminar" class="btn-ancho">🗑️ Borrar</button>
+            </div>
+        </div>
     </div>
 
-    <!-- LAS 4 OPCIONES CON TEXTO COMPACTO EN 2 LÍNEAS INTERNAS -->
     <div class="seccion-cables">
         <div class="seccion-titulo">Ajuste y Control de Etiquetas (0,0)</div>
         <div class="fila-botones-unica">
