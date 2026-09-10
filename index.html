@@ -25,8 +25,8 @@
         #contenedor-lienzo {
             width: 100vw;
             max-width: 500px;
-            height: 52vh;
-            max-height: 500px;
+            height: 48vh;
+            max-height: 480px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -57,9 +57,18 @@
         #btn-eliminar { background: #dc3545; } 
         #btn-eliminar:active { background: #c82333; }
         
-        #btn-lock-global { background: #28a745; color: white; font-weight: bold; }
-        #btn-lock-local { background: #17a2b8; color: white; font-weight: bold; }
-        #btn-toggle-cables { background: #6f42c1; color: white; font-weight: bold; }
+        /* SECCIÓN ESPECÍFICA DE CONTROL (0,0) */
+        .seccion-cables {
+            width: 100%; max-width: 500px; background: #e9ecef; border-top: 2px solid #ced4da; padding: 4px 6px; display: flex; flex-direction: column; gap: 4px;
+        }
+        .seccion-titulo { font-size: 11px; font-weight: bold; color: #495057; text-align: center; text-transform: uppercase; }
+        .fila-botones { display: flex; gap: 4px; justify-content: space-between; }
+        .fila-botones button { flex: 1; padding: 6px 2px; font-size: 11px; font-weight: bold; border: none; border-radius: 6px; color: white; text-align: center; }
+
+        #btn-toggle-cables { background: #6f42c1; }
+        #btn-lock-local { background: #17a2b8; }
+        #btn-lock-global { background: #28a745; }
+        #btn-unlock-cables { background: #fd7e14; }
 
         #modal-opciones { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 100; align-items: flex-end; justify-content: center; }
         .modal-content { background: white; width: 100%; max-width: 500px; border-radius: 20px 20px 0 0; padding: 20px; max-height: 70vh; overflow-y: auto; }
@@ -105,17 +114,21 @@
         <button id="btn-zoom-in">➕ Zoom</button>
         <button id="btn-rotar-izq">↺ Girar</button>
         <button id="btn-rotar-der">↻ Girar</button>
-    </div>
-    
-    <div class="herramientas">
-        <button id="btn-eliminar">🗑️ Eliminar</button>
+        <button id="btn-eliminar">🗑️ Borrar</button>
         <button id="btn-multi">☐ Sel. Múltiple</button>
-        <button id="btn-toggle-cables">👁️ Ver (0,0)</button>
     </div>
 
-    <div class="herramientas">
-        <button id="btn-lock-global">🔒 Fijar Todas</button>
-        <button id="btn-lock-local">📌 Solo Esta Arqueta</button>
+    <!-- PANEL DE CONTROL CLARO PARA ETIQUETAS (0,0) -->
+    <div class="seccion-cables">
+        <div class="seccion-titulo">Ajuste y Control de Etiquetas (0,0)</div>
+        <div class="fila-botones">
+            <button id="btn-toggle-cables">👁️ Ocultar (0,0)</button>
+            <button id="btn-unlock-cables">🔓 Mover (0,0)</button>
+        </div>
+        <div class="fila-botones">
+            <button id="btn-lock-local">📍 Fijar Solo Esta Arqueta</button>
+            <button id="btn-lock-global">🌐 Fijar Todas las Arquetas</button>
+        </div>
     </div>
 
     <div id="modal-opciones">
@@ -176,32 +189,42 @@
             renderizarListaConductos(); 
             cargarDatosGuardados();
             sincronizarPendientesOffline();
-            actualizarEstadoBotonesLock();
         }
 
-        // 1. FIJAR GLOBALMENTE (PARA TODAS LAS ARQUETAS)
-        const btnLockGlobal = document.getElementById('btn-lock-global');
-        btnLockGlobal.addEventListener('click', () => {
+        // DESBLOQUEAR PARA MOVER CON EL DEDO
+        document.getElementById('btn-unlock-cables').addEventListener('click', () => {
             cablesBloqueados = !cablesBloqueados;
-            if (cablesBloqueados) {
-                guardarPosicionesFijasCables('global');
-                mostrarBanner("🔒 Posición (0,0) FIJADA GLOBALMENTE para todas las arquetas", "#28a745");
+            const btn = document.getElementById('btn-unlock-cables');
+            if (!cablesBloqueados) {
+                btn.innerText = "🔒 Bloquear Movimiento";
+                btn.style.backgroundColor = "#28a745";
+                mostrarBanner("🔓 (0,0) Desbloqueados: Muévelos a la posición que quieras con el dedo", "#ffc107");
             } else {
-                mostrarBanner("🔓 (0,0) Desbloqueados para mover libremente", "#ffc107");
+                btn.innerText = "🔓 Mover (0,0)";
+                btn.style.backgroundColor = "#fd7e14";
+                mostrarBanner("🔒 Posiciones de (0,0) bloqueadas contra arrastres accidentales", "#28a745");
             }
-            actualizarEstadoBotonesLock();
         });
 
-        // 2. FIJAR SOLO EN ESTA ARQUETA
-        const btnLockLocal = document.getElementById('btn-lock-local');
-        btnLockLocal.addEventListener('click', () => {
+        // FIJAR POSICIÓN SOLO EN ESTA ARQUETA
+        document.getElementById('btn-lock-local').addEventListener('click', () => {
             guardarPosicionesFijasCables('local');
             cablesBloqueados = true;
-            actualizarEstadoBotonesLock();
-            mostrarBanner("📌 Posición (0,0) Guardada SOLO para esta arqueta", "#17a2b8");
+            document.getElementById('btn-unlock-cables').innerText = "🔓 Mover (0,0)";
+            document.getElementById('btn-unlock-cables').style.backgroundColor = "#fd7e14";
+            mostrarBanner("📍 Posición (0,0) guardada SOLO para la arqueta " + arquetaId, "#17a2b8");
         });
 
-        // 3. OCULTAR / MOSTRAR (0,0)
+        // FIJAR POSICIÓN EN TODAS LAS ARQUETAS
+        document.getElementById('btn-lock-global').addEventListener('click', () => {
+            guardarPosicionesFijasCables('global');
+            cablesBloqueados = true;
+            document.getElementById('btn-unlock-cables').innerText = "🔓 Mover (0,0)";
+            document.getElementById('btn-unlock-cables').style.backgroundColor = "#fd7e14";
+            mostrarBanner("🌐 Posición (0,0) guardada para TODAS las arquetas del proyecto", "#28a745");
+        });
+
+        // MOSTRAR U OCULTAR (0,0)
         const btnToggleCables = document.getElementById('btn-toggle-cables');
         btnToggleCables.addEventListener('click', () => {
             cablesVisibles = !cablesVisibles;
@@ -209,7 +232,7 @@
             
             if (!cablesVisibles) {
                 elementosCables.forEach(el => el.style.display = 'none');
-                btnToggleCables.innerText = "🙈 Oculto (0,0)";
+                btnToggleCables.innerText = "👁️ Mostrar (0,0)";
                 btnToggleCables.style.backgroundColor = "#6c757d";
                 mostrarBanner("🙈 Se han ocultado los (0,0) en este abatimiento", "#6c757d");
             } else {
@@ -218,22 +241,11 @@
                 } else {
                     elementosCables.forEach(el => el.style.display = 'flex');
                 }
-                btnToggleCables.innerText = "👁️ Ver (0,0)";
+                btnToggleCables.innerText = "👁️ Ocultar (0,0)";
                 btnToggleCables.style.backgroundColor = "#6f42c1";
                 mostrarBanner("👁️ Visibles los (0,0)", "#6f42c1");
             }
         });
-
-        function actualizarEstadoBotonesLock() {
-            if (cablesBloqueados) {
-                btnLockGlobal.innerText = "🔒 Fijar Todas";
-                btnLockGlobal.style.backgroundColor = "#28a745";
-            } else {
-                btnLockGlobal.innerText = "🔓 Mover (0,0)";
-                btnLockGlobal.style.backgroundColor = "#ffc107";
-                btnLockGlobal.style.color = "#212529";
-            }
-        }
 
         function guardarPosicionesFijasCables(tipo) {
             let configCables = {};
@@ -386,7 +398,6 @@
         document.getElementById('btn-rotar-izq').addEventListener('click', () => cambiarRotacionManual(-90));
         document.getElementById('btn-rotar-der').addEventListener('click', () => cambiarRotacionManual(90));
 
-        // RECUPERACIÓN INTELIGENTE DE POSICIÓN (1º ESPECÍFICA DE ESTA ARQUETA, 2º GLOBAL, 3º DEFECTO)
         function asegurarCablesTotalesCruz() {
             const rect = lienzo.getBoundingClientRect();
             const w = rect.width || 300;
