@@ -25,8 +25,8 @@
         #contenedor-lienzo {
             width: 100vw;
             max-width: 500px;
-            height: 54vh;
-            max-height: 520px;
+            height: 52vh;
+            max-height: 500px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -47,17 +47,19 @@
             overflow: hidden;
         }
 
-        .controles { width: 100%; max-width: 500px; display: flex; justify-content: space-around; padding: 8px; background: #fff; }
-        .controles button { padding: 10px; font-size: 15px; background: #007bff; color: white; border: none; border-radius: 8px; width: 48%; font-weight: bold;}
+        .controles { width: 100%; max-width: 500px; display: flex; justify-content: space-around; padding: 6px 8px; background: #fff; }
+        .controles button { padding: 9px; font-size: 14px; background: #007bff; color: white; border: none; border-radius: 8px; width: 48%; font-weight: bold;}
         
-        .herramientas { width: 100%; max-width: 500px; display: flex; justify-content: space-between; gap: 5px; padding: 6px 10px; background: #f8f9fa; border-top: 1px solid #ddd; }
-        .herramientas button { flex: 1; padding: 8px 4px; font-size: 13px; background: #6c757d; color: white; border: none; border-radius: 8px; font-weight: bold; text-align: center;}
+        .herramientas { width: 100%; max-width: 500px; display: flex; justify-content: space-between; gap: 4px; padding: 4px 8px; background: #f8f9fa; border-top: 1px solid #ddd; }
+        .herramientas button { flex: 1; padding: 7px 2px; font-size: 12px; background: #6c757d; color: white; border: none; border-radius: 6px; font-weight: bold; text-align: center;}
         .herramientas button:active { background: #5a6268; }
         
         #btn-eliminar { background: #dc3545; } 
         #btn-eliminar:active { background: #c82333; }
         
-        #btn-lock-cables { background: #28a745; color: white; font-weight: bold; }
+        #btn-lock-global { background: #28a745; color: white; font-weight: bold; }
+        #btn-lock-local { background: #17a2b8; color: white; font-weight: bold; }
+        #btn-toggle-cables { background: #6f42c1; color: white; font-weight: bold; }
 
         #modal-opciones { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 100; align-items: flex-end; justify-content: center; }
         .modal-content { background: white; width: 100%; max-width: 500px; border-radius: 20px 20px 0 0; padding: 20px; max-height: 70vh; overflow-y: auto; }
@@ -108,7 +110,12 @@
     <div class="herramientas">
         <button id="btn-eliminar">🗑️ Eliminar</button>
         <button id="btn-multi">☐ Sel. Múltiple</button>
-        <button id="btn-lock-cables">🔒 Fijado (0,0)</button>
+        <button id="btn-toggle-cables">👁️ Ver (0,0)</button>
+    </div>
+
+    <div class="herramientas">
+        <button id="btn-lock-global">🔒 Fijar Todas</button>
+        <button id="btn-lock-local">📌 Solo Esta Arqueta</button>
     </div>
 
     <div id="modal-opciones">
@@ -146,6 +153,7 @@
         let elementosSeleccionados = new Set();
         let modoSeleccionMultiple = false;
         let cablesBloqueados = true;
+        let cablesVisibles = true;
 
         const opcionesPredefinidas = [
             { prisma: 1, diametro: 110, cols: 1, label: "1 ø 110" },
@@ -168,35 +176,66 @@
             renderizarListaConductos(); 
             cargarDatosGuardados();
             sincronizarPendientesOffline();
-            actualizarEstadoBotonLock();
+            actualizarEstadoBotonesLock();
         }
 
-        const btnLock = document.getElementById('btn-lock-cables');
-        btnLock.addEventListener('click', () => {
+        // 1. FIJAR GLOBALMENTE (PARA TODAS LAS ARQUETAS)
+        const btnLockGlobal = document.getElementById('btn-lock-global');
+        btnLockGlobal.addEventListener('click', () => {
             cablesBloqueados = !cablesBloqueados;
-            
             if (cablesBloqueados) {
-                guardarPosicionesFijasCables();
-                mostrarBanner("🔒 Posiciones de (0,0) FIJADAS para todas las arquetas", "#28a745");
+                guardarPosicionesFijasCables('global');
+                mostrarBanner("🔒 Posición (0,0) FIJADA GLOBALMENTE para todas las arquetas", "#28a745");
             } else {
-                mostrarBanner("🔓 (0,0) Desbloqueados: Muévelos a la posición deseada", "#ffc107");
+                mostrarBanner("🔓 (0,0) Desbloqueados para mover libremente", "#ffc107");
             }
-            actualizarEstadoBotonLock();
+            actualizarEstadoBotonesLock();
         });
 
-        function actualizarEstadoBotonLock() {
-            if (cablesBloqueados) {
-                btnLock.innerText = "🔒 Fijado (0,0)";
-                btnLock.style.backgroundColor = "#28a745";
-                btnLock.style.color = "white";
+        // 2. FIJAR SOLO EN ESTA ARQUETA
+        const btnLockLocal = document.getElementById('btn-lock-local');
+        btnLockLocal.addEventListener('click', () => {
+            guardarPosicionesFijasCables('local');
+            cablesBloqueados = true;
+            actualizarEstadoBotonesLock();
+            mostrarBanner("📌 Posición (0,0) Guardada SOLO para esta arqueta", "#17a2b8");
+        });
+
+        // 3. OCULTAR / MOSTRAR (0,0)
+        const btnToggleCables = document.getElementById('btn-toggle-cables');
+        btnToggleCables.addEventListener('click', () => {
+            cablesVisibles = !cablesVisibles;
+            const elementosCables = document.querySelectorAll('.elemento-draggable[data-tipo="cables"]');
+            
+            if (!cablesVisibles) {
+                elementosCables.forEach(el => el.style.display = 'none');
+                btnToggleCables.innerText = "🙈 Oculto (0,0)";
+                btnToggleCables.style.backgroundColor = "#6c757d";
+                mostrarBanner("🙈 Se han ocultado los (0,0) en este abatimiento", "#6c757d");
             } else {
-                btnLock.innerText = "🔓 Mover (0,0)";
-                btnLock.style.backgroundColor = "#ffc107";
-                btnLock.style.color = "#212529";
+                if (elementosCables.length === 0) {
+                    asegurarCablesTotalesCruz();
+                } else {
+                    elementosCables.forEach(el => el.style.display = 'flex');
+                }
+                btnToggleCables.innerText = "👁️ Ver (0,0)";
+                btnToggleCables.style.backgroundColor = "#6f42c1";
+                mostrarBanner("👁️ Visibles los (0,0)", "#6f42c1");
+            }
+        });
+
+        function actualizarEstadoBotonesLock() {
+            if (cablesBloqueados) {
+                btnLockGlobal.innerText = "🔒 Fijar Todas";
+                btnLockGlobal.style.backgroundColor = "#28a745";
+            } else {
+                btnLockGlobal.innerText = "🔓 Mover (0,0)";
+                btnLockGlobal.style.backgroundColor = "#ffc107";
+                btnLockGlobal.style.color = "#212529";
             }
         }
 
-        function guardarPosicionesFijasCables() {
+        function guardarPosicionesFijasCables(tipo) {
             let configCables = {};
             document.querySelectorAll('.elemento-draggable[data-tipo="cables"]').forEach(el => {
                 let cara = el.getAttribute('data-cara');
@@ -205,7 +244,12 @@
                     y: el.getAttribute('data-y')
                 };
             });
-            localStorage.setItem('config_fija_cables', JSON.stringify(configCables));
+            
+            if (tipo === 'global') {
+                localStorage.setItem('config_fija_cables', JSON.stringify(configCables));
+            } else if (tipo === 'local') {
+                localStorage.setItem(`config_fija_cables_${arquetaId}`, JSON.stringify(configCables));
+            }
         }
 
         function calcularCaraPorPosicion(x, y) {
@@ -302,7 +346,6 @@
             btnMulti.innerText = modoSeleccionMultiple ? '☑️ Sel. Múltiple' : '☐ Sel. Múltiple';
         });
 
-        // BOTÓN ELIMINAR SIN RESTRICCIONES (BORRA CUALQUIER ELEMENTO SELECCIONADO)
         document.getElementById('btn-eliminar').addEventListener('click', () => {
             elementosSeleccionados.forEach(el => {
                 el.remove();
@@ -343,15 +386,20 @@
         document.getElementById('btn-rotar-izq').addEventListener('click', () => cambiarRotacionManual(-90));
         document.getElementById('btn-rotar-der').addEventListener('click', () => cambiarRotacionManual(90));
 
+        // RECUPERACIÓN INTELIGENTE DE POSICIÓN (1º ESPECÍFICA DE ESTA ARQUETA, 2º GLOBAL, 3º DEFECTO)
         function asegurarCablesTotalesCruz() {
             const rect = lienzo.getBoundingClientRect();
             const w = rect.width || 300;
             const h = rect.height || 300;
 
-            let configGuardada = localStorage.getItem('config_fija_cables');
+            let configLocal = localStorage.getItem(`config_fija_cables_${arquetaId}`);
+            let configGlobal = localStorage.getItem('config_fija_cables');
             let posiciones = null;
-            if (configGuardada) {
-                try { posiciones = JSON.parse(configGuardada); } catch(e){}
+
+            if (configLocal) {
+                try { posiciones = JSON.parse(configLocal); } catch(e){}
+            } else if (configGlobal) {
+                try { posiciones = JSON.parse(configGlobal); } catch(e){}
             }
 
             let posA = posiciones && posiciones['A'] ? { x: parseFloat(posiciones['A'].x), y: parseFloat(posiciones['A'].y) } : { x: w * 0.44, y: h * 0.125 };
@@ -551,18 +599,20 @@
                 estadoLienzo.imagen_base64 = imagenBase64;
 
                 document.querySelectorAll('.elemento-draggable').forEach(el => {
-                    estadoLienzo.elementos.push({
-                        tipo: el.getAttribute('data-tipo'),
-                        texto: el.innerText.split('\n')[0],
-                        prisma: el.getAttribute('data-prisma'),
-                        diametro: el.getAttribute('data-diametro'),
-                        cols: el.getAttribute('data-cols'),
-                        x: el.getAttribute('data-x'),
-                        y: el.getAttribute('data-y'),
-                        cara: el.getAttribute('data-cara') || 'A',
-                        rotacion: el.getAttribute('data-rotacion'),
-                        escala: el.getAttribute('data-scale')
-                    });
+                    if (el.style.display !== 'none') {
+                        estadoLienzo.elementos.push({
+                            tipo: el.getAttribute('data-tipo'),
+                            texto: el.innerText.split('\n')[0],
+                            prisma: el.getAttribute('data-prisma'),
+                            diametro: el.getAttribute('data-diametro'),
+                            cols: el.getAttribute('data-cols'),
+                            x: el.getAttribute('data-x'),
+                            y: el.getAttribute('data-y'),
+                            cara: el.getAttribute('data-cara') || 'A',
+                            rotacion: el.getAttribute('data-rotacion'),
+                            escala: el.getAttribute('data-scale')
+                        });
+                    }
                 });
 
                 localStorage.setItem(`arqueta_${arquetaId}`, JSON.stringify(estadoLienzo));
