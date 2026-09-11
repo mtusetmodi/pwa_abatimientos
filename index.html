@@ -360,16 +360,16 @@
         document.getElementById('btn-rotar-izq').addEventListener('click', () => cambiarRotacionManual(-90));
         document.getElementById('btn-rotar-der').addEventListener('click', () => cambiarRotacionManual(90));
 
-        // AJUSTE EXACTO LATERAL CARAS B Y D
+        // COORDENADAS EXACTAS SOLICITADAS: CARA D = 0.065 / CARA B = 0.825
         function asegurarCablesTotalesCruz() {
             const rect = lienzo.getBoundingClientRect();
             const w = rect.width || 300;
             const h = rect.height || 300;
 
             let posA = { x: w * 0.44, y: h * 0.095 };
-            let posB = { x: w * 0.885, y: h * 0.50 }; // Desplazado más a la derecha para centrar en su columna
+            let posB = { x: w * 0.825, y: h * 0.50 }; // Cambiado a 0.825
             let posC = { x: w * 0.44, y: h * 0.875 };
-            let posD = { x: w * 0.075, y: h * 0.50 }; // Fijado más a la izquierda dentro de la casilla lateral D
+            let posD = { x: w * 0.065, y: h * 0.50 }; // Cambiado a 0.065
 
             crearElementoEnDOM('cables', '(0,0)', posA.x, posA.y, 0, 0, 0, 1, 0, 'A');
             crearElementoEnDOM('cables', '(0,0)', posB.x, posB.y, 0, 0, 90, 1, 0, 'B'); 
