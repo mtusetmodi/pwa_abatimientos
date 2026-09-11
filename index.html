@@ -22,6 +22,7 @@
             display: none; color: white; transition: all 0.3s ease;
         }
 
+        /* CONTENEDOR CON PROPORCIÓN MATEMÁTICA FIJA */
         #contenedor-lienzo {
             width: 100vw;
             max-width: 420px;
@@ -34,12 +35,16 @@
             position: relative;
         }
 
+        /* LIENZO FIJO RESPONSIBO: CONSERVA LA MISMA ESCALA EN CUALQUIER PANTALLA */
         #lienzo {
             width: 100%;
             height: 100%;
+            aspect-ratio: 1 / 1;
+            max-width: 100%;
+            max-height: 100%;
             background-color: white;
             background-image: url('plantilla_cruz.png');
-            background-size: contain;
+            background-size: 100% 100%; /* Forzado a cubrir exacto el area del lienzo */
             background-position: center center;
             background-repeat: no-repeat;
             position: relative;
@@ -62,9 +67,7 @@
             flex: 1; padding: 8px 2px; font-size: 12px; font-weight: bold; border: none; border-radius: 8px; color: white; background: #6c757d; text-align: center; cursor: pointer;
         }
 
-        .fila-herramientas button:active {
-            background: #5a6268;
-        }
+        .fila-herramientas button:active { background: #5a6268; }
 
         #btn-eliminar { background: #dc3545; } 
         #btn-eliminar:active { background: #c82333; }
@@ -74,16 +77,7 @@
         }
         
         #btn-toggle-cables { 
-            width: 100%;
-            padding: 10px; 
-            font-size: 13px; 
-            font-weight: bold; 
-            border: none; 
-            border-radius: 8px; 
-            color: white; 
-            background: #6f42c1;
-            text-align: center; 
-            cursor: pointer;
+            width: 100%; padding: 10px; font-size: 13px; font-weight: bold; border: none; border-radius: 8px; color: white; background: #6f42c1; text-align: center; cursor: pointer;
         }
 
         #modal-opciones { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 100; align-items: flex-end; justify-content: center; }
@@ -107,11 +101,11 @@
         .texto-libre { font-size: 14px; font-weight: bold; color: #000; padding: 1px 3px; background: transparent; white-space: nowrap; }
         .texto-libre.cables-totales { color: #000; letter-spacing: 0.5px; }
 
-        /* AJUSTE ESPECÍFICO PARA ORDENADOR: SIMULA LA PANTALLA MÓVIL EXACTA */
-        @media (min-width: 600px) {
+        /* VISTA DISPOSITIVO GRANDE / ESCRITORIO */
+        @media (min-width: 500px) {
             #contenedor-lienzo {
                 width: 420px;
-                height: 480px;
+                height: 420px;
             }
         }
     </style>
@@ -369,6 +363,7 @@
         document.getElementById('btn-rotar-izq').addEventListener('click', () => cambiarRotacionManual(-90));
         document.getElementById('btn-rotar-der').addEventListener('click', () => cambiarRotacionManual(90));
 
+        // COORDENADAS VINCULADAS AL ASPECT RATIO 1:1 UNIFICADO
         function asegurarCablesTotalesCruz() {
             const rect = lienzo.getBoundingClientRect();
             const w = rect.width || 300;
@@ -525,7 +520,7 @@
                             let rot = el.getAttribute('data-rotacion') || 0;
                             let scale = el.getAttribute('data-scale') || 1;
                             
-                            el.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg) scale(${scale})`;
+                            el.style.transform = `translate(${x}px, ${y}px) rotate(${rot Oktoberfest}deg) scale(${scale})`;
                             el.setAttribute('data-x', x);
                             el.setAttribute('data-y', y);
 
