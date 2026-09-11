@@ -150,7 +150,7 @@
             <div class="opcion-lista" style="color:#007bff; font-weight:bold;" onclick="abrirPersonalizado()">
                 + Crear Personalizado...
             </div>
-            <button onclick="cerrarModal()" style="width:100%; padding:15px; margin-top:15px; background:#6c757d; color:white; border:none; border-radius:8px; font-size:16px;">Cancelar</button>
+            <button onclick="cerrarModal()" style="width:100%; padding:15px; margin-top:15px; background:#6c757d; color:white; border-radius:8px; font-size:16px;">Cancelar</button>
         </div>
     </div>
 
@@ -360,7 +360,7 @@
         document.getElementById('btn-rotar-izq').addEventListener('click', () => cambiarRotacionManual(-90));
         document.getElementById('btn-rotar-der').addEventListener('click', () => cambiarRotacionManual(90));
 
-        // CARA D CORREGIDA A 0.185 (LA POSICIÓN QUE ESTABA PERFECTA)
+        // CARA D CORREGIDA HASTA EL PUNTO EXACTO 0.110
         function asegurarCablesTotalesCruz() {
             const rect = lienzo.getBoundingClientRect();
             const w = rect.width || 300;
@@ -369,7 +369,7 @@
             let posA = { x: w * 0.44, y: h * 0.095 };
             let posB = { x: w * 0.812, y: h * 0.50 };
             let posC = { x: w * 0.44, y: h * 0.875 };
-            let posD = { x: w * 0.185, y: h * 0.50 }; // Restablecido a 0.185 para centrarlo en la Cara D
+            let posD = { x: w * 0.110, y: h * 0.50 }; // Cambiado a 0.110 para ajustarlo exactamente a la izquierda
 
             crearElementoEnDOM('cables', '(0,0)', posA.x, posA.y, 0, 0, 0, 1, 0, 'A');
             crearElementoEnDOM('cables', '(0,0)', posB.x, posB.y, 0, 0, 90, 1, 0, 'B'); 
