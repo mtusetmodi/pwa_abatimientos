@@ -360,7 +360,7 @@
         document.getElementById('btn-rotar-izq').addEventListener('click', () => cambiarRotacionManual(-90));
         document.getElementById('btn-rotar-der').addEventListener('click', () => cambiarRotacionManual(90));
 
-        // CARA D CAMBIADA EXACTAMENTE A 0.100
+        // CARA D AJUSTADA MATEMÁTICAMENTE A 0.085
         function asegurarCablesTotalesCruz() {
             const rect = lienzo.getBoundingClientRect();
             const w = rect.width || 300;
@@ -369,7 +369,7 @@
             let posA = { x: w * 0.44, y: h * 0.095 };
             let posB = { x: w * 0.812, y: h * 0.50 };
             let posC = { x: w * 0.44, y: h * 0.875 };
-            let posD = { x: w * 0.100, y: h * 0.50 }; // Ajustado a 0.100 exactamente
+            let posD = { x: w * 0.085, y: h * 0.50 }; // Cambiado a 0.085 para mayor desplazamiento a la izquierda
 
             crearElementoEnDOM('cables', '(0,0)', posA.x, posA.y, 0, 0, 0, 1, 0, 'A');
             crearElementoEnDOM('cables', '(0,0)', posB.x, posB.y, 0, 0, 90, 1, 0, 'B'); 
