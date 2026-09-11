@@ -50,7 +50,6 @@
         .controles { width: 100%; max-width: 500px; display: flex; justify-content: space-around; padding: 6px 8px; background: #fff; }
         .controles button { padding: 9px; font-size: 14px; background: #007bff; color: white; border: none; border-radius: 8px; width: 48%; font-weight: bold;}
         
-        /* ESTRUCTURA EXACTA EN 3 FILAS DE 2 BOTONES */
         .bloque-herramientas {
             width: 100%; max-width: 500px; background: #f8f9fa; border-top: 1px solid #ddd; padding: 6px 8px; display: flex; flex-direction: column; gap: 5px;
         }
@@ -70,7 +69,6 @@
         #btn-eliminar { background: #dc3545; } 
         #btn-eliminar:active { background: #c82333; }
         
-        /* PANEL DE CONTROL (0,0) */
         .seccion-cables {
             width: 100%; max-width: 500px; background: #e9ecef; border-top: 2px solid #ced4da; padding: 4px 6px; display: flex; flex-direction: column; gap: 3px;
         }
@@ -138,19 +136,15 @@
         <button id="btn-add-texto">+ Texto / Nota</button>
     </div>
 
-    <!-- BLOQUE DE 3 FILAS X 2 BOTONES DE HERRAMIENTAS -->
     <div class="bloque-herramientas">
-        <!-- FILA 1: GIRAR IZQ | ZOOM IN -->
         <div class="fila-herramientas">
             <button id="btn-rotar-izq">↺ Girar</button>
             <button id="btn-zoom-in">➕ Zoom</button>
         </div>
-        <!-- FILA 2: GIRAR DER | ZOOM OUT -->
         <div class="fila-herramientas">
             <button id="btn-rotar-der">↻ Girar</button>
             <button id="btn-zoom-out">➖ Zoom</button>
         </div>
-        <!-- FILA 3: SEL. MÚLTIPLE | BORRAR -->
         <div class="fila-herramientas">
             <button id="btn-multi">☐ Sel. Múltiple</button>
             <button id="btn-eliminar">🗑️ Borrar</button>
@@ -162,8 +156,8 @@
         <div class="fila-botones-unica">
             <button id="btn-toggle-cables">👁️ Ocultar<br>(0,0)</button>
             <button id="btn-unlock-cables">🔓 Mover<br>(0,0)</button>
-            <button id="btn-lock-local">📍 Fijar Solo<br>Esta Arqueta</button>
-            <button id="btn-lock-global">🌐 Fijar Posición<br>de Todas</button>
+            <button id="btn-lock-local">📍 Solo Esta<br>Arqueta</button>
+            <button id="btn-lock-global">🌐 Todas las<br>Arquetas</button>
         </div>
     </div>
 
@@ -205,20 +199,22 @@
         let cablesVisibles = true;
 
         const opcionesPredefinidas = [
-            { prisma: 1, diametro: 110, cols: 1, label: "1 ø 110" },
-            { prisma: 2, diametro: 110, cols: 2, label: "2 ø 110 (2x1)" },
-            { prisma: 4, diametro: 110, cols: 2, label: "4 ø 110 (2x2)" },
-            { prisma: 4, diametro: 110, cols: 4, label: "4 ø 110 (4x1 en línea)" },
-            { prisma: 6, diametro: 110, cols: 2, label: "6 ø 110 (2 cols x 3 filas)" },
+            { prisma: 1, diametro: 110, cols: 1, label: "1 ø 110 (Horizontal)" },
+            { prisma: 2, diametro: 110, cols: 2, label: "2 ø 110 (2x1 Horizontal)" },
+            { prisma: 3, diametro: 110, cols: 3, label: "3 ø 110 (3x1 Horizontal)" },
+            { prisma: 4, diametro: 110, cols: 4, label: "4 ø 110 (4x1 Horizontal)" },
+            { prisma: 5, diametro: 110, cols: 5, label: "5 ø 110 (5x1 Horizontal)" },
+            { prisma: 6, diametro: 110, cols: 6, label: "6 ø 110 (6x1 Horizontal)" },
+            { prisma: 4, diametro: 110, cols: 2, label: "4 ø 110 (2 cols x 2 filas)" },
             { prisma: 6, diametro: 110, cols: 3, label: "6 ø 110 (3 cols x 2 filas)" },
-            { prisma: 1, diametro: 125, cols: 1, label: "1 ø 125" },
-            { prisma: 2, diametro: 125, cols: 2, label: "2 ø 125 (2x1)" },
-            { prisma: 4, diametro: 125, cols: 2, label: "4 ø 125 (2x2)" },
-            { prisma: 4, diametro: 125, cols: 4, label: "4 ø 125 (4x1 en línea)" },
-            { prisma: 6, diametro: 125, cols: 2, label: "6 ø 125 (2 cols x 3 filas)" },
-            { prisma: 6, diametro: 125, cols: 3, label: "6 ø 125 (3 cols x 2 filas)" },
-            { prisma: 2, diametro: 100, cols: 2, label: "2 ø 100" },
-            { prisma: 5, diametro: 200, cols: 2, label: "5 ø 200" }
+            { prisma: 1, diametro: 125, cols: 1, label: "1 ø 125 (Horizontal)" },
+            { prisma: 2, diametro: 125, cols: 2, label: "2 ø 125 (2x1 Horizontal)" },
+            { prisma: 3, diametro: 125, cols: 3, label: "3 ø 125 (3x1 Horizontal)" },
+            { prisma: 4, diametro: 125, cols: 4, label: "4 ø 125 (4x1 Horizontal)" },
+            { prisma: 5, diametro: 125, cols: 5, label: "5 ø 125 (5x1 Horizontal)" },
+            { prisma: 6, diametro: 125, cols: 6, label: "6 ø 125 (6x1 Horizontal)" },
+            { prisma: 4, diametro: 125, cols: 2, label: "4 ø 125 (2 cols x 2 filas)" },
+            { prisma: 6, diametro: 125, cols: 3, label: "6 ø 125 (3 cols x 2 filas)" }
         ];
 
         function inicializar() { 
@@ -430,6 +426,7 @@
         document.getElementById('btn-rotar-izq').addEventListener('click', () => cambiarRotacionManual(-90));
         document.getElementById('btn-rotar-der').addEventListener('click', () => cambiarRotacionManual(90));
 
+        // COORDENADAS CORREGIDAS Y EXACTAS DENTRO DE CADA CASILLA RECTANGULAR DEDICADA
         function asegurarCablesTotalesCruz() {
             const rect = lienzo.getBoundingClientRect();
             const w = rect.width || 300;
@@ -445,10 +442,10 @@
                 try { posiciones = JSON.parse(configGlobal); } catch(e){}
             }
 
-            let posA = posiciones && posiciones['A'] ? { x: parseFloat(posiciones['A'].x), y: parseFloat(posiciones['A'].y) } : { x: w * 0.44, y: h * 0.125 };
-            let posB = posiciones && posiciones['B'] ? { x: parseFloat(posiciones['B'].x), y: parseFloat(posiciones['B'].y) } : { x: w * 0.785, y: h * 0.50 };
-            let posC = posiciones && posiciones['C'] ? { x: parseFloat(posiciones['C'].x), y: parseFloat(posiciones['C'].y) } : { x: w * 0.44, y: h * 0.855 };
-            let posD = posiciones && posiciones['D'] ? { x: parseFloat(posiciones['D'].x), y: parseFloat(posiciones['D'].y) } : { x: w * 0.12, y: h * 0.50 };
+            let posA = posiciones && posiciones['A'] ? { x: parseFloat(posiciones['A'].x), y: parseFloat(posiciones['A'].y) } : { x: w * 0.44, y: h * 0.055 };
+            let posB = posiciones && posiciones['B'] ? { x: parseFloat(posiciones['B'].x), y: parseFloat(posiciones['B'].y) } : { x: w * 0.85, y: h * 0.50 };
+            let posC = posiciones && posiciones['C'] ? { x: parseFloat(posiciones['C'].x), y: parseFloat(posiciones['C'].y) } : { x: w * 0.44, y: h * 0.94 };
+            let posD = posiciones && posiciones['D'] ? { x: parseFloat(posiciones['D'].x), y: parseFloat(posiciones['D'].y) } : { x: w * 0.15, y: h * 0.50 };
 
             crearElementoEnDOM('cables', '(0,0)', posA.x, posA.y, 0, 0, 0, 1, 0, 'A');
             crearElementoEnDOM('cables', '(0,0)', posB.x, posB.y, 0, 0, 90, 1, 0, 'B'); 
@@ -482,12 +479,23 @@
 
         function abrirPersonalizado() {
             cerrarModal();
-            let p = prompt("Nº de Tubos (Prisma):");
+            let p = prompt("Nº Total de Tubos (Prisma):");
+            if (!p) return;
             let d = prompt("Diámetro:");
-            let c = prompt("Nº de Columnas (ej: 2 o 3):", "2");
+            if (!d) return;
+            
+            let orientacion = confirm("¿Quieres colocar los tubos en HORIZONTAL?\n\n- Pulsa ACEPTAR para Línea Horizontal (1 fila)\n- Pulsa CANCELAR para Línea Vertical (1 columna)");
+            
+            let cols = 1;
+            if (orientacion) {
+                cols = parseInt(p);
+            } else {
+                cols = 1;
+            }
+
             const rect = lienzo.getBoundingClientRect();
             let caraAuto = calcularCaraPorPosicion(rect.width/2 - 25, rect.height/2 - 25);
-            if(p && d) crearElementoEnDOM('conducto', '', rect.width/2 - 25, rect.height/2 - 25, parseInt(p), d, 0, 1, parseInt(c || 2), caraAuto);
+            crearElementoEnDOM('conducto', '', rect.width/2 - 25, rect.height/2 - 25, parseInt(p), d, 0, 1, cols, caraAuto);
         }
 
         document.getElementById('btn-add-texto').addEventListener('click', () => {
