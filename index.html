@@ -96,7 +96,6 @@
         #btn-unlock-cables { background: #fd7e14; }
         #btn-lock-local { background: #17a2b8; }
         #btn-lock-global { background: #28a745; }
-        #btn-reset-cables { background: #dc3545; }
 
         #modal-opciones { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 100; align-items: flex-end; justify-content: center; }
         .modal-content { background: white; width: 100%; max-width: 500px; border-radius: 20px 20px 0 0; padding: 20px; max-height: 70vh; overflow-y: auto; }
@@ -159,7 +158,6 @@
             <button id="btn-unlock-cables">🔓 Mover<br>(0,0)</button>
             <button id="btn-lock-local">📍 Solo Esta<br>Arqueta</button>
             <button id="btn-lock-global">🌐 Todas las<br>Arquetas</button>
-            <button id="btn-reset-cables">🔄 Restab.<br>(0,0)</button>
         </div>
     </div>
 
@@ -253,20 +251,6 @@
             document.getElementById('btn-unlock-cables').innerHTML = "🔓 Mover<br>(0,0)";
             document.getElementById('btn-unlock-cables').style.backgroundColor = "#fd7e14";
             mostrarBanner("🌐 Posición (0,0) guardada para TODAS las arquetas", "#28a745");
-        });
-
-        // BOTÓN RESTABLECER: BORRA MEMORIA ANTIGUA DE (0,0) Y RESTAURA DENTRO DE LOS RECTÁNGULOS
-        document.getElementById('btn-reset-cables').addEventListener('click', () => {
-            localStorage.removeItem('config_fija_cables');
-            localStorage.removeItem(`config_fija_cables_${arquetaId}`);
-            
-            document.querySelectorAll('.elemento-draggable[data-tipo="cables"]').forEach(el => el.remove());
-            asegurarCablesTotalesCruz();
-            
-            cablesBloqueados = true;
-            document.getElementById('btn-unlock-cables').innerHTML = "🔓 Mover<br>(0,0)";
-            document.getElementById('btn-unlock-cables').style.backgroundColor = "#fd7e14";
-            mostrarBanner("🔄 (0,0) Restablecidos exactamente dentro de sus casillas", "#28a745");
         });
 
         const btnToggleCables = document.getElementById('btn-toggle-cables');
@@ -442,7 +426,7 @@
         document.getElementById('btn-rotar-izq').addEventListener('click', () => cambiarRotacionManual(-90));
         document.getElementById('btn-rotar-der').addEventListener('click', () => cambiarRotacionManual(90));
 
-        // COORDENADAS PERFECTAS DENTRO DE CADA CASILLA RECTANGULAR
+        // COORDENADAS PERFECTAS DENTRO DE LAS CASILLAS
         function asegurarCablesTotalesCruz() {
             const rect = lienzo.getBoundingClientRect();
             const w = rect.width || 300;
@@ -458,7 +442,7 @@
                 try { posiciones = JSON.parse(configGlobal); } catch(e){}
             }
 
-            // AJUSTE FINO DE POSICIÓN DENTRO DE LOS RECTÁNGULOS DE LA PLANTILLA
+            // SI HAY CONFIGURACIÓN GUARDADA PERSONALIZADA, USARLA; SI NO, USAR RECUADROS PERFECTOS
             let posA = posiciones && posiciones['A'] ? { x: parseFloat(posiciones['A'].x), y: parseFloat(posiciones['A'].y) } : { x: w * 0.44, y: h * 0.082 };
             let posB = posiciones && posiciones['B'] ? { x: parseFloat(posiciones['B'].x), y: parseFloat(posiciones['B'].y) } : { x: w * 0.812, y: h * 0.50 };
             let posC = posiciones && posiciones['C'] ? { x: parseFloat(posiciones['C'].x), y: parseFloat(posiciones['C'].y) } : { x: w * 0.44, y: h * 0.902 };
