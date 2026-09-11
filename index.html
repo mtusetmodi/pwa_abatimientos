@@ -360,20 +360,16 @@
         document.getElementById('btn-rotar-izq').addEventListener('click', () => cambiarRotacionManual(-90));
         document.getElementById('btn-rotar-der').addEventListener('click', () => cambiarRotacionManual(90));
 
-        // AJUSTE FINO PERFECTO Y REAJUSTADO DE LAS 4 CARAS DENTRO DE SUS CASILLAS
+        // CARA D CORREGIDA A 0.185 (LA POSICIÓN QUE ESTABA PERFECTA)
         function asegurarCablesTotalesCruz() {
             const rect = lienzo.getBoundingClientRect();
             const w = rect.width || 300;
             const h = rect.height || 300;
 
-            // Cara A: Bajar ligeramente a 0.095 para entrar perfecto
             let posA = { x: w * 0.44, y: h * 0.095 };
-            // Cara B: Mantener en 0.812
             let posB = { x: w * 0.812, y: h * 0.50 };
-            // Cara C: Mantener en 0.875
             let posC = { x: w * 0.44, y: h * 0.875 };
-            // Cara D: Mover a 0.120 para meter dentro de la casilla
-            let posD = { x: w * 0.120, y: h * 0.50 };
+            let posD = { x: w * 0.185, y: h * 0.50 }; // Restablecido a 0.185 para centrarlo en la Cara D
 
             crearElementoEnDOM('cables', '(0,0)', posA.x, posA.y, 0, 0, 0, 1, 0, 'A');
             crearElementoEnDOM('cables', '(0,0)', posB.x, posB.y, 0, 0, 90, 1, 0, 'B'); 
