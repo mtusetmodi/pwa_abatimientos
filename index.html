@@ -426,7 +426,7 @@
         document.getElementById('btn-rotar-izq').addEventListener('click', () => cambiarRotacionManual(-90));
         document.getElementById('btn-rotar-der').addEventListener('click', () => cambiarRotacionManual(90));
 
-        // COORDENADAS PERFECTAS DENTRO DE LAS CASILLAS
+        // COORDENADAS MATEMÁTICAS CENTRADAS EXACTAS
         function asegurarCablesTotalesCruz() {
             const rect = lienzo.getBoundingClientRect();
             const w = rect.width || 300;
@@ -442,11 +442,11 @@
                 try { posiciones = JSON.parse(configGlobal); } catch(e){}
             }
 
-            // SI HAY CONFIGURACIÓN GUARDADA PERSONALIZADA, USARLA; SI NO, USAR RECUADROS PERFECTOS
-            let posA = posiciones && posiciones['A'] ? { x: parseFloat(posiciones['A'].x), y: parseFloat(posiciones['A'].y) } : { x: w * 0.44, y: h * 0.082 };
-            let posB = posiciones && posiciones['B'] ? { x: parseFloat(posiciones['B'].x), y: parseFloat(posiciones['B'].y) } : { x: w * 0.812, y: h * 0.50 };
-            let posC = posiciones && posiciones['C'] ? { x: parseFloat(posiciones['C'].x), y: parseFloat(posiciones['C'].y) } : { x: w * 0.44, y: h * 0.902 };
-            let posD = posiciones && posiciones['D'] ? { x: parseFloat(posiciones['D'].x), y: parseFloat(posiciones['D'].y) } : { x: w * 0.185, y: h * 0.50 };
+            // PUNTOS CENTRADOS DENTRO DE CADA CASILLA RECTANGULAR
+            let posA = posiciones && posiciones['A'] ? { x: parseFloat(posiciones['A'].x), y: parseFloat(posiciones['A'].y) } : { x: w * 0.50, y: h * 0.080 };
+            let posB = posiciones && posiciones['B'] ? { x: parseFloat(posiciones['B'].x), y: parseFloat(posiciones['B'].y) } : { x: w * 0.90, y: h * 0.500 };
+            let posC = posiciones && posiciones['C'] ? { x: parseFloat(posiciones['C'].x), y: parseFloat(posiciones['C'].y) } : { x: w * 0.50, y: h * 0.920 };
+            let posD = posiciones && posiciones['D'] ? { x: parseFloat(posiciones['D'].x), y: parseFloat(posiciones['D'].y) } : { x: w * 0.10, y: h * 0.500 };
 
             crearElementoEnDOM('cables', '(0,0)', posA.x, posA.y, 0, 0, 0, 1, 0, 'A');
             crearElementoEnDOM('cables', '(0,0)', posB.x, posB.y, 0, 0, 90, 1, 0, 'B'); 
@@ -542,6 +542,7 @@
             let caraCalculada = cara || calcularCaraPorPosicion(x, y);
             div.setAttribute('data-cara', caraCalculada);
 
+            // CENTRADO EXACTO DE ORIGEN
             div.style.transform = `translate(${x}px, ${y}px) rotate(${rotacion}deg) scale(${escala})`;
 
             div.addEventListener('click', function(e) {
