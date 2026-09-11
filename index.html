@@ -69,7 +69,6 @@
         #btn-eliminar { background: #dc3545; } 
         #btn-eliminar:active { background: #c82333; }
         
-        /* SECCIÓN SIMPLIFICADA ÚNICAMENTE CON MOSTRAR/OCULTAR (0,0) */
         .seccion-cables {
             width: 100%; max-width: 500px; background: #e9ecef; border-top: 2px solid #ced4da; padding: 6px; display: flex; justify-content: center;
         }
@@ -140,7 +139,6 @@
         </div>
     </div>
 
-    <!-- ÚNICO BOTÓN LIMPIO PARA MOSTRAR / OCULTAR -->
     <div class="seccion-cables">
         <button id="btn-toggle-cables">👁️ Ocultar (0,0)</button>
     </div>
@@ -362,20 +360,20 @@
         document.getElementById('btn-rotar-izq').addEventListener('click', () => cambiarRotacionManual(-90));
         document.getElementById('btn-rotar-der').addEventListener('click', () => cambiarRotacionManual(90));
 
-        // COORDENADAS HARDCODED Y MATEMÁTICAMENTE CORREGIDAS SEGÚN LA CARA D
+        // AJUSTE FINO PERFECTO Y REAJUSTADO DE LAS 4 CARAS DENTRO DE SUS CASILLAS
         function asegurarCablesTotalesCruz() {
             const rect = lienzo.getBoundingClientRect();
             const w = rect.width || 300;
             const h = rect.height || 300;
 
-            // CARA A: Bajado a 0.125 para entrar en su casilla horizontal
-            let posA = { x: w * 0.44, y: h * 0.125 };
-            // CARA B: Ajustado a 0.812 (simétrico a Cara D) para entrar en su columna derecha
+            // Cara A: Bajar ligeramente a 0.095 para entrar perfecto
+            let posA = { x: w * 0.44, y: h * 0.095 };
+            // Cara B: Mantener en 0.812
             let posB = { x: w * 0.812, y: h * 0.50 };
-            // CARA C: Subido a 0.875 para entrar en su casilla horizontal
+            // Cara C: Mantener en 0.875
             let posC = { x: w * 0.44, y: h * 0.875 };
-            // CARA D: Manteniéndose perfecto en 0.185
-            let posD = { x: w * 0.185, y: h * 0.50 };
+            // Cara D: Mover a 0.120 para meter dentro de la casilla
+            let posD = { x: w * 0.120, y: h * 0.50 };
 
             crearElementoEnDOM('cables', '(0,0)', posA.x, posA.y, 0, 0, 0, 1, 0, 'A');
             crearElementoEnDOM('cables', '(0,0)', posB.x, posB.y, 0, 0, 90, 1, 0, 'B'); 
