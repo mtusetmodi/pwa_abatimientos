@@ -51,8 +51,8 @@
         }
 
         .controles { width: 100%; max-width: 420px; display: flex; justify-content: space-between; gap: 4px; padding: 6px 8px; background: #fff; }
-        .controles button { padding: 9px 4px; font-size: 12px; background: #007bff; color: white; border: none; border-radius: 8px; flex: 1; font-weight: bold; cursor: pointer;}
-        #btn-ia { background: #e83e8c; }
+        .controles button, .controles label { padding: 9px 4px; font-size: 12px; background: #007bff; color: white; border: none; border-radius: 8px; flex: 1; font-weight: bold; cursor: pointer; text-align: center; display: flex; align-items: center; justify-content: center;}
+        #btn-ia-label { background: #e83e8c; }
 
         .bloque-herramientas {
             width: 100%; max-width: 420px; background: #f8f9fa; border-top: 1px solid #ddd; padding: 6px 8px; display: flex; flex-direction: column; gap: 5px;
@@ -79,14 +79,10 @@
             width: 100%; padding: 10px; font-size: 13px; font-weight: bold; border: none; border-radius: 8px; color: white; background: #6f42c1; text-align: center; cursor: pointer;
         }
 
-        #modal-opciones, #modal-camara { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 100; align-items: flex-end; justify-content: center; }
-        .modal-content { background: white; width: 100%; max-width: 420px; border-radius: 20px 20px 0 0; padding: 20px 20px 35px 20px; max-height: 85vh; overflow-y: auto; text-align: center;}
+        #modal-opciones { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 100; align-items: flex-end; justify-content: center; }
+        .modal-content { background: white; width: 100%; max-width: 420px; border-radius: 20px 20px 0 0; padding: 20px; max-height: 80vh; overflow-y: auto; text-align: center;}
         .modal-content h3 { margin-top: 0; border-bottom: 2px solid #dc3545; padding-bottom: 10px; color: #dc3545; }
         .opcion-lista { padding: 15px; border-bottom: 1px solid #eee; font-size: 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer;}
-
-        .btn-cam-accion { width: 100%; padding: 14px; font-size: 15px; font-weight: bold; border: none; border-radius: 8px; margin-top: 10px; cursor: pointer; color: white; }
-        #btn-capturar-ia { background: #e83e8c; }
-        #btn-cerrar-cam { background: #6c757d; }
 
         .elemento-draggable {
             position: absolute; display: flex; flex-direction: column; align-items: center;
@@ -124,10 +120,14 @@
         <div id="lienzo"></div>
     </div>
 
+    <canvas id="canvas-ia" style="display:none;"></canvas>
+
     <div class="controles">
         <button id="btn-add-conducto">+ Conducto</button>
         <button id="btn-add-texto">+ Texto / Nota</button>
-        <button id="btn-ia">📷 Escanear IA</button>
+        <!-- BOTÓN DIRECTO QUE DISPARA LA CÁMARA MÓVIL NATIVA -->
+        <label id="btn-ia-label" for="input-foto-directo">📷 Escanear IA</label>
+        <input type="file" id="input-foto-directo" accept="image/*;capture=camera" capture="environment" style="display:none;">
     </div>
 
     <div class="bloque-herramientas">
@@ -157,20 +157,6 @@
                 + Crear Personalizado...
             </div>
             <button onclick="cerrarModal()" style="width:100%; padding:15px; margin-top:15px; background:#6c757d; color:white; border-radius:8px; font-size:16px; cursor:pointer;">Cancelar</button>
-        </div>
-    </div>
-
-    <!-- MODAL LIMPIO PARA IA NATIVA -->
-    <div id="modal-camara">
-        <div class="modal-content">
-            <h3 style="color:#e83e8c; border-bottom-color:#e83e8c;">Escanear Arqueta con IA</h3>
-            <p style="font-size:13px; color:#555; margin-bottom:15px;">Toma una foto limpia del interior de la arqueta para que la IA detecte los conductos automáticamente.</p>
-            
-            <canvas id="canvas-ia" style="display:none;"></canvas>
-            <input type="file" id="input-foto-ia" accept="image/*" capture="environment" style="display:none;">
-            
-            <button id="btn-capturar-ia" class="btn-cam-accion">📸 Abrir Cámara y Foto</button>
-            <button id="btn-cerrar-cam" class="btn-cam-accion" onclick="cerrarModalCamara()">Cancelar</button>
         </div>
     </div>
 
@@ -226,26 +212,11 @@
             sincronizarPendientesOffline();
         }
 
-        // ABRIR DIÁLOGO DE CÁMARA
-        document.getElementById('btn-ia').addEventListener('click', () => {
-            document.getElementById('modal-camara').style.display = 'flex';
-        });
-
-        function cerrarModalCamara() {
-            document.getElementById('modal-camara').style.display = 'none';
-        }
-
-        document.getElementById('btn-capturar-ia').addEventListener('click', () => {
-            document.getElementById('input-foto-ia').click();
-        });
-
-        // AL TOMAR LA FOTO CON LA APP DE CÁMARA DEL SISTEMA
-        document.getElementById('input-foto-ia').addEventListener('change', (e) => {
+        // CAPTURA DIRECTA DE FOTO
+        document.getElementById('input-foto-directo').addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
-                const btn = document.getElementById('btn-capturar-ia');
-                btn.innerText = "⏳ Analizando arqueta...";
-                btn.disabled = true;
+                mostrarBanner("⏳ Analizando foto con Gemini IA...", "#e83e8c");
 
                 const reader = new FileReader();
                 reader.onload = (event) => {
@@ -253,8 +224,7 @@
                     img.onload = () => {
                         const canvas = document.getElementById('canvas-ia');
                         
-                        // Redimensionamos la foto para agilizar la subida
-                        const MAX_WIDTH = 1024;
+                        const MAX_WIDTH = 800;
                         let width = img.width;
                         let height = img.height;
 
@@ -268,7 +238,7 @@
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
                         
-                        enviarAGeminiIA(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]);
+                        enviarAGeminiIA(canvas.toDataURL('image/jpeg', 0.75).split(',')[1]);
                     };
                     img.src = event.target.result;
                 };
@@ -277,58 +247,60 @@
         });
 
         async function enviarAGeminiIA(base64Data) {
-            const btn = document.getElementById('btn-capturar-ia');
-
             const promptText = `Analiza esta imagen del interior de una arqueta de telecomunicaciones o electricidad. 
             Identifica los conductos o tubos visibles.
             Devuelve UNICAMENTE un JSON sin formato markdown, sin texto extra ni comentarios, con este formato exacto:
             [{"prisma": 4, "diametro": "110", "cols": 4, "cara": "A"}]`;
 
-            // CONEXIÓN DIRECTA CON GEMINI 2.5 FLASH
-            try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [
-                                { text: promptText },
-                                { inline_data: { mime_type: "image/jpeg", data: base64Data } }
-                            ]
-                        }]
-                    })
-                });
+            const modelos = [
+                "gemini-2.5-flash",
+                "gemini-1.5-flash",
+                "gemini-1.5-flash-8b",
+                "gemini-2.0-flash"
+            ];
 
-                const data = await response.json();
+            let exito = false;
 
-                if (data.error) {
-                    alert("⚠️ Error API: " + data.error.message);
-                    return;
-                }
+            for (const mod of modelos) {
+                if (exito) break;
+                try {
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${mod}:generateContent?key=${GEMINI_API_KEY}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [
+                                    { text: promptText },
+                                    { inline_data: { mime_type: "image/jpeg", data: base64Data } }
+                                ]
+                            }]
+                        })
+                    });
 
-                if (data.candidates && data.candidates[0].content.parts[0].text) {
-                    let resultText = data.candidates[0].content.parts[0].text.trim();
-                    resultText = resultText.replace(/```json/gi, '').replace(/```/g, '').trim();
+                    const data = await response.json();
 
-                    const conductos = JSON.parse(resultText);
-                    const rect = lienzo.getBoundingClientRect();
+                    if (data.candidates && data.candidates[0].content.parts[0].text) {
+                        let resultText = data.candidates[0].content.parts[0].text.trim();
+                        resultText = resultText.replace(/```json/gi, '').replace(/```/g, '').trim();
 
-                    if (Array.isArray(conductos) && conductos.length > 0) {
-                        conductos.forEach(opc => {
-                            crearElementoEnDOM('conducto', '', rect.width/2 - 25, rect.height/2 - 25, opc.prisma || 1, opc.diametro || "110", 0, 1, opc.cols || opc.prisma, opc.cara || 'A');
-                        });
-                        mostrarBanner(`✨ Gemini IA detectó ${conductos.length} conducto(s)`, "#e83e8c");
-                    } else {
-                        alert("No se detectaron conductos claros en la foto.");
+                        const conductos = JSON.parse(resultText);
+                        const rect = lienzo.getBoundingClientRect();
+
+                        if (Array.isArray(conductos) && conductos.length > 0) {
+                            conductos.forEach(opc => {
+                                crearElementoEnDOM('conducto', '', rect.width/2 - 25, rect.height/2 - 25, opc.prisma || 1, opc.diametro || "110", 0, 1, opc.cols || opc.prisma, opc.cara || 'A');
+                            });
+                            mostrarBanner(`✨ Gemini IA detectó ${conductos.length} conducto(s)`, "#e83e8c");
+                            exito = true;
+                        }
                     }
+                } catch(e) {
+                    console.warn(`Modelo ${mod} intentado...`);
                 }
-            } catch(e) {
-                console.error(e);
-                alert("⚠️ Error de procesamiento. Asegúrate de tener conexión a internet.");
-            } finally {
-                btn.innerText = "📸 Abrir Cámara y Foto";
-                btn.disabled = false;
-                cerrarModalCamara();
+            }
+
+            if (!exito) {
+                alert("⚠️ No se pudieron analizar los conductos. Por favor intenta tomar la foto con más iluminación dentro de la arqueta.");
             }
         }
 
