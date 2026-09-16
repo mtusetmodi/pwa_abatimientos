@@ -230,7 +230,6 @@
             try {
                 let urlConsulta = `${urlScript}?accion=obtener_fotos&fotoA=${encodeURIComponent(fotosAppSheet.A || '')}&fotoB=${encodeURIComponent(fotosAppSheet.B || '')}&fotoC=${encodeURIComponent(fotosAppSheet.C || '')}&fotoD=${encodeURIComponent(fotosAppSheet.D || '')}`;
                 
-                // CONFIGURACIÓN DE FETCH ANTI-CORS CON REDIRECCIÓN
                 let resp = await fetch(urlConsulta, { method: 'GET', redirect: 'follow' });
                 let datosFotos = await resp.json();
 
@@ -377,6 +376,7 @@
             el.setAttribute('data-cara', caraAuto);
         }
 
+        // FUNCIÓN CARGAR DATOS PROTEGIDA CONTRA FALLOS DE SINTAXIS JSON
         function cargarDatosGuardados() {
             if (arquetaId === "SIN_ID") {
                 asegurarCablesTotalesCruz();
@@ -399,22 +399,26 @@
                 } catch(e) {}
             }
 
-            // FETCH CON MANEJO LIMPIO DE REDIRECCIONES GOOGLE SCRIPT
             fetch(`${urlScript}?arqueta=${encodeURIComponent(arquetaId)}`, { method: 'GET', redirect: 'follow' })
-                .then(response => response.json())
-                .then(data => {
-                    if (data && data.elementos && data.elementos.length > 0) {
-                        lienzo.innerHTML = "";
-                        data.elementos.forEach(el => {
-                            crearElementoEnDOM(el.tipo, el.texto, parseFloat(el.x), parseFloat(el.y), parseInt(el.prisma), el.diametro, parseFloat(el.rotacion), parseFloat(el.escala), parseInt(el.cols), el.cara);
-                        });
-                        seleccionarElemento(null);
-                    } else {
-                        asegurarCablesTotalesCruz();
+                .then(response => response.text())
+                .then(textoBruto => {
+                    try {
+                        let data = JSON.parse(textoBruto);
+                        if (data && data.elementos && data.elementos.length > 0) {
+                            lienzo.innerHTML = "";
+                            data.elementos.forEach(el => {
+                                crearElementoEnDOM(el.tipo, el.texto, parseFloat(el.x), parseFloat(el.y), parseInt(el.prisma), el.diametro, parseFloat(el.rotacion), parseFloat(el.escala), parseInt(el.cols), el.cara);
+                            });
+                            seleccionarElemento(null);
+                            return;
+                        }
+                    } catch(errJson) {
+                        console.warn("Respuesta no es JSON válido en carga inicial, ignorando...", errJson);
                     }
+                    asegurarCablesTotalesCruz();
                 })
                 .catch(err => {
-                    console.error("Error al cargar datos:", err);
+                    console.error("Error conectando con servidor para datos iniciales:", err);
                     asegurarCablesTotalesCruz();
                 });
         }
