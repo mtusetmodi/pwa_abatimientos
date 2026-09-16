@@ -51,8 +51,9 @@
         }
 
         .controles { width: 100%; max-width: 420px; display: flex; justify-content: space-between; gap: 4px; padding: 6px 8px; background: #fff; }
-        .controles button, .controles label { padding: 9px 4px; font-size: 12px; background: #007bff; color: white; border: none; border-radius: 8px; flex: 1; font-weight: bold; cursor: pointer; text-align: center; display: flex; align-items: center; justify-content: center;}
+        .controles button, .controles label { padding: 9px 4px; font-size: 11px; background: #007bff; color: white; border: none; border-radius: 8px; flex: 1; font-weight: bold; cursor: pointer; text-align: center; display: flex; align-items: center; justify-content: center;}
         #btn-ia-label { background: #e83e8c; }
+        #btn-auto-appsheet { background: #6f42c1; display: none; }
 
         .bloque-herramientas {
             width: 100%; max-width: 420px; background: #f8f9fa; border-top: 1px solid #ddd; padding: 6px 8px; display: flex; flex-direction: column; gap: 5px;
@@ -124,9 +125,9 @@
 
     <div class="controles">
         <button id="btn-add-conducto">+ Conducto</button>
-        <button id="btn-add-texto">+ Texto / Nota</button>
-        <!-- BOTÓN DIRECTO QUE DISPARA LA CÁMARA MÓVIL NATIVA -->
-        <label id="btn-ia-label" for="input-foto-directo">📷 Escanear IA</label>
+        <button id="btn-add-texto">+ Texto</button>
+        <button id="btn-auto-appsheet">✨ Auto IA AppSheet</button>
+        <label id="btn-ia-label" for="input-foto-directo">📷 Escanear Foto</label>
         <input type="file" id="input-foto-directo" accept="image/*;capture=camera" capture="environment" style="display:none;">
     </div>
 
@@ -178,6 +179,14 @@
         }
         const arquetaId = rawArqueta.trim();
 
+        // CAPTURA DE FOTOS APPSHEET DESDE LA URL
+        const fotosAppSheet = {
+            A: urlParams.get('fotoA'),
+            B: urlParams.get('fotoB'),
+            C: urlParams.get('fotoC'),
+            D: urlParams.get('fotoD')
+        };
+
         document.getElementById('titulo-app').innerText = "Arqueta: " + arquetaId;
 
         let estadoLienzo = { id_arqueta: arquetaId, elementos: [], imagen_base64: "" };
@@ -210,9 +219,36 @@
             renderizarListaConductos(); 
             cargarDatosGuardados();
             sincronizarPendientesOffline();
+
+            // Si vienen fotos de AppSheet en la URL, se muestra el botón de auto-rellenar
+            if (fotosAppSheet.A || fotosAppSheet.B || fotosAppSheet.C || fotosAppSheet.D) {
+                document.getElementById('btn-auto-appsheet').style.display = 'flex';
+            }
         }
 
-        // CAPTURA DIRECTA DE FOTO
+        // AUTO-PROCESADO DE LAS 4 FOTOS DE APPSHEET
+        document.getElementById('btn-auto-appsheet').addEventListener('click', async () => {
+            mostrarBanner("⏳ Obteniendo fotos de AppSheet...", "#6f42c1");
+
+            try {
+                let urlConsulta = `${urlScript}?accion=obtener_fotos&fotoA=${encodeURIComponent(fotosAppSheet.A || '')}&fotoB=${encodeURIComponent(fotosAppSheet.B || '')}&fotoC=${encodeURIComponent(fotosAppSheet.C || '')}&fotoD=${encodeURIComponent(fotosAppSheet.D || '')}`;
+                let resp = await fetch(urlConsulta);
+                let datosFotos = await resp.json();
+
+                let caras = ['A', 'B', 'C', 'D'];
+                for (let cara of caras) {
+                    if (datosFotos['foto' + cara]) {
+                        mostrarBanner(`🤖 Analizando Cara ${cara} con Gemini IA...`, "#e83e8c");
+                        await enviarAGeminiIA(datosFotos['foto' + cara], cara);
+                    }
+                }
+                mostrarBanner("✅ ¡Análisis automático completado!", "#28a745");
+            } catch(e) {
+                alert("⚠️ Error al comunicarse con AppSheet para leer las fotos.");
+            }
+        });
+
+        // FOTO MANUAL INDIVIDUAL
         document.getElementById('input-foto-directo').addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
@@ -223,7 +259,6 @@
                     const img = new Image();
                     img.onload = () => {
                         const canvas = document.getElementById('canvas-ia');
-                        
                         const MAX_WIDTH = 800;
                         let width = img.width;
                         let height = img.height;
@@ -238,7 +273,7 @@
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
                         
-                        enviarAGeminiIA(canvas.toDataURL('image/jpeg', 0.75).split(',')[1]);
+                        enviarAGeminiIA(canvas.toDataURL('image/jpeg', 0.75).split(',')[1], null);
                     };
                     img.src = event.target.result;
                 };
@@ -246,19 +281,13 @@
             }
         });
 
-        async function enviarAGeminiIA(base64Data) {
-            const promptText = `Analiza esta imagen del interior de una arqueta de telecomunicaciones o electricidad. 
+        async function enviarAGeminiIA(base64Data, caraForzada) {
+            const promptText = `Analiza esta imagen del interior de una pared/cara de una arqueta. 
             Identifica los conductos o tubos visibles.
             Devuelve UNICAMENTE un JSON sin formato markdown, sin texto extra ni comentarios, con este formato exacto:
-            [{"prisma": 4, "diametro": "110", "cols": 4, "cara": "A"}]`;
+            [{"prisma": 4, "diametro": "110", "cols": 4}]`;
 
-            const modelos = [
-                "gemini-2.5-flash",
-                "gemini-1.5-flash",
-                "gemini-1.5-flash-8b",
-                "gemini-2.0-flash"
-            ];
-
+            const modelos = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-2.0-flash"];
             let exito = false;
 
             for (const mod of modelos) {
@@ -288,19 +317,24 @@
 
                         if (Array.isArray(conductos) && conductos.length > 0) {
                             conductos.forEach(opc => {
-                                crearElementoEnDOM('conducto', '', rect.width/2 - 25, rect.height/2 - 25, opc.prisma || 1, opc.diametro || "110", 0, 1, opc.cols || opc.prisma, opc.cara || 'A');
+                                let caraDestino = caraForzada || 'A';
+                                let posX = rect.width/2 - 25;
+                                let posY = rect.height/2 - 25;
+
+                                // Coloca el elemento directamente en el área de la cara
+                                if (caraDestino === 'A') posY = rect.height * 0.20;
+                                else if (caraDestino === 'C') posY = rect.height * 0.75;
+                                else if (caraDestino === 'B') posX = rect.width * 0.75;
+                                else if (caraDestino === 'D') posX = rect.width * 0.20;
+
+                                crearElementoEnDOM('conducto', '', posX, posY, opc.prisma || 1, opc.diametro || "110", 0, 1, opc.cols || opc.prisma, caraDestino);
                             });
-                            mostrarBanner(`✨ Gemini IA detectó ${conductos.length} conducto(s)`, "#e83e8c");
                             exito = true;
                         }
                     }
                 } catch(e) {
-                    console.warn(`Modelo ${mod} intentado...`);
+                    console.warn(`Reintentando...`);
                 }
-            }
-
-            if (!exito) {
-                alert("⚠️ No se pudieron analizar los conductos. Por favor intenta tomar la foto con más iluminación dentro de la arqueta.");
             }
         }
 
