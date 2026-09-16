@@ -170,7 +170,8 @@
             }).catch(err => console.error('Error al registrar SW:', err));
         }
 
-        const urlScript = "https://script.google.com/macros/s/AKfycbzgetL9wcujKF9VIF5VsNPCytAi21s-EeFKPdt-kgpJFIxC7Jb_mku6YRbgE477VOty/exec"; 
+        // NUEVA URL DEL SCRIPT ACTUALIZADA
+        const urlScript = "https://script.google.com/macros/s/AKfycbxwwuGB0KT-s1ntqKDaWvIn__W5jJxCCpY2NqdUvtwb-6WXMNMFY9RjQIPoTpHC85Lh/exec"; 
 
         const urlParams = new URLSearchParams(window.location.search);
         let rawArqueta = urlParams.get('arqueta') || "SIN_ID";
@@ -249,7 +250,6 @@
 
                 form.submit();
 
-                // Timeout de seguridad por si no hay respuesta de red
                 setTimeout(() => {
                     if (document.body.contains(form)) {
                         document.body.removeChild(iframe);
