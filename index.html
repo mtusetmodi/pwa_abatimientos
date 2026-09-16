@@ -214,20 +214,50 @@
             { prisma: 6, diametro: 125, cols: 3, label: "6 ø 125 (3 cols x 2 filas)" }
         ];
 
-        // LECTURA DIRECTA DE TEXTO BRUTO PARA EVITAR ERRORES DE PARSEO DE SCRIPT
-        async function consultarGAS(url) {
-            try {
-                const resp = await fetch(url);
-                const texto = await resp.text();
-                if (texto.trim().startsWith('<')) {
-                    console.warn("GAS respondió con HTML de error/redirección.");
-                    return {};
+        // PETICIÓN MEDIANTE IFRAME Y POSTMESSAGE (100% INMUNE A CORS DE GOOGLE)
+        function enviarPeticionFormularioGAS(params) {
+            return new Promise((resolve) => {
+                const idIframe = 'iframe_gas_' + Date.now();
+                const iframe = document.createElement('iframe');
+                iframe.name = idIframe;
+                iframe.style.display = 'none';
+
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = urlScript;
+                form.target = idIframe;
+
+                for (let key in params) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = key;
+                    input.value = params[key] || '';
+                    form.appendChild(input);
                 }
-                return JSON.parse(texto);
-            } catch(e) {
-                console.warn("Error en consulta GAS:", e);
-                return {};
-            }
+
+                document.body.appendChild(iframe);
+                document.body.appendChild(form);
+
+                window.addEventListener('message', function handler(e) {
+                    if (e.data && e.data.origen === 'GAS') {
+                        window.removeEventListener('message', handler);
+                        document.body.removeChild(iframe);
+                        document.body.removeChild(form);
+                        resolve(e.data.payload);
+                    }
+                });
+
+                form.submit();
+
+                // Timeout de seguridad por si no hay respuesta de red
+                setTimeout(() => {
+                    if (document.body.contains(form)) {
+                        document.body.removeChild(iframe);
+                        document.body.removeChild(form);
+                        resolve({});
+                    }
+                }, 12000);
+            });
         }
 
         function inicializar() { 
@@ -244,9 +274,13 @@
             mostrarBanner("⏳ Obteniendo fotos de AppSheet...", "#6f42c1");
 
             try {
-                let urlConsulta = `${urlScript}?accion=obtener_fotos&fotoA=${encodeURIComponent(fotosAppSheet.A || '')}&fotoB=${encodeURIComponent(fotosAppSheet.B || '')}&fotoC=${encodeURIComponent(fotosAppSheet.C || '')}&fotoD=${encodeURIComponent(fotosAppSheet.D || '')}`;
-                
-                let datosFotos = await consultarGAS(urlConsulta);
+                let datosFotos = await enviarPeticionFormularioGAS({
+                    accion: "obtener_fotos",
+                    fotoA: fotosAppSheet.A || '',
+                    fotoB: fotosAppSheet.B || '',
+                    fotoC: fotosAppSheet.C || '',
+                    fotoD: fotosAppSheet.D || ''
+                });
 
                 let caras = ['A', 'B', 'C', 'D'];
                 for (let cara of caras) {
@@ -414,7 +448,7 @@
             }
 
             try {
-                let data = await consultarGAS(`${urlScript}?arqueta=${encodeURIComponent(arquetaId)}`);
+                let data = await enviarPeticionFormularioGAS({ accion: "obtener_datos", arqueta: arquetaId });
                 if (data && data.elementos && data.elementos.length > 0) {
                     lienzo.innerHTML = "";
                     data.elementos.forEach(el => {
@@ -425,7 +459,6 @@
                     asegurarCablesTotalesCruz();
                 }
             } catch(e) {
-                console.warn("Cargando lienzo inicial estándar.");
                 asegurarCablesTotalesCruz();
             }
         }
