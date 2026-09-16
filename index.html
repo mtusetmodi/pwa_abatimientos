@@ -166,13 +166,13 @@
             <h3 style="color:#e83e8c; border-bottom-color:#e83e8c;">Escanear Arqueta con IA</h3>
             <video id="video-camara" autoplay playsinline></video>
             <canvas id="canvas-ia" style="display:none;"></canvas>
+            <input type="file" id="input-foto-fallback" accept="image/*" capture="environment" style="display:none;">
             <button id="btn-capturar-ia" class="btn-cam-accion">📸 Analizar con Gemini IA</button>
             <button id="btn-cerrar-cam" class="btn-cam-accion" onclick="cerrarModalCamara()">Cancelar</button>
         </div>
     </div>
 
     <script>
-        // CLAVE DE API INTEGRADA DIRECTAMENTE
         const GEMINI_API_KEY = "AIzaSyCet4GwCsoI5dvz3IxLWPz79BekczG2XTA";
 
         if ('serviceWorker' in navigator) {
@@ -225,16 +225,45 @@
             sincronizarPendientesOffline();
         }
 
+        /* MANEJO FLEXIBLE DE CÁMARA CON COMPATIBILIDAD MÓVIL */
         document.getElementById('btn-ia').addEventListener('click', async () => {
+            document.getElementById('modal-camara').style.display = 'flex';
             try {
-                document.getElementById('modal-camara').style.display = 'flex';
+                // Intento 1: Cámara Trasera
                 streamCamara = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'environment' }
+                    video: { facingMode: { exact: "environment" } }
                 });
                 document.getElementById('video-camara').srcObject = streamCamara;
-            } catch(e) {
-                alert("No se pudo acceder a la cámara del dispositivo.");
-                cerrarModalCamara();
+            } catch (err1) {
+                try {
+                    // Intento 2: Cualquier Cámara
+                    streamCamara = await navigator.mediaDevices.getUserMedia({ video: true });
+                    document.getElementById('video-camara').srcObject = streamCamara;
+                } catch (err2) {
+                    // Intento 3: Disparar cámara nativa del sistema
+                    document.getElementById('video-camara').style.display = 'none';
+                    document.getElementById('input-foto-fallback').click();
+                }
+            }
+        });
+
+        document.getElementById('input-foto-fallback').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.getElementById('canvas-ia');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+                        enviarAGeminiIA(canvas.toDataURL('image/jpeg').split(',')[1]);
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
             }
         });
 
@@ -242,23 +271,31 @@
             if (streamCamara) {
                 streamCamara.getTracks().forEach(track => track.stop());
             }
+            document.getElementById('video-camara').style.display = 'block';
             document.getElementById('modal-camara').style.display = 'none';
         }
 
-        document.getElementById('btn-capturar-ia').addEventListener('click', async () => {
-            const btn = document.getElementById('btn-capturar-ia');
+        document.getElementById('btn-capturar-ia').addEventListener('click', () => {
             const video = document.getElementById('video-camara');
             const canvas = document.getElementById('canvas-ia');
             
-            btn.innerText = "⏳ Analizando arqueta...";
-            btn.disabled = true;
+            if (video.style.display === 'none') {
+                document.getElementById('input-foto-fallback').click();
+                return;
+            }
 
             canvas.width = video.videoWidth || 640;
             canvas.height = video.videoHeight || 480;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             
-            const base64Data = canvas.toDataURL('image/jpeg').split(',')[1];
+            enviarAGeminiIA(canvas.toDataURL('image/jpeg').split(',')[1]);
+        });
+
+        async function enviarAGeminiIA(base64Data) {
+            const btn = document.getElementById('btn-capturar-ia');
+            btn.innerText = "⏳ Analizando arqueta...";
+            btn.disabled = true;
 
             const prompt = `Analiza esta imagen del interior de una arqueta de telecomunicaciones o electricidad. 
             Identifica los tubos o prismas de conductos visibles.
@@ -303,7 +340,7 @@
                 btn.disabled = false;
                 cerrarModalCamara();
             }
-        });
+        }
 
         const btnToggleCables = document.getElementById('btn-toggle-cables');
         btnToggleCables.addEventListener('click', () => {
