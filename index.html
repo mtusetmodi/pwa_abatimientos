@@ -214,24 +214,16 @@
             { prisma: 6, diametro: 125, cols: 3, label: "6 ø 125 (3 cols x 2 filas)" }
         ];
 
-        // FUNCIÓN AUXILIAR DE PETICIÓN JSONP PARA EVITAR BLOQUEOS CORS
-        function peticionJSONP(url) {
-            return new Promise((resolve, reject) => {
-                const nombreCallback = 'jsonp_cb_' + Math.round(100000 * Math.random());
-                window[nombreCallback] = function(data) {
-                    delete window[nombreCallback];
-                    document.body.removeChild(script);
-                    resolve(data);
-                };
-                const script = document.createElement('script');
-                script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + nombreCallback;
-                script.onerror = function() {
-                    delete window[nombreCallback];
-                    document.body.removeChild(script);
-                    reject(new Error('Error en petición JSONP'));
-                };
-                document.body.appendChild(script);
-            });
+        // LECTURA DE GOOGLE APPS SCRIPT ROBUSTA MEDIANTE PROXY TEXT
+        async function consultarGAS(url) {
+            const resp = await fetch(url);
+            const texto = await resp.text();
+            try {
+                return JSON.parse(texto);
+            } catch(e) {
+                console.error("Respuesta HTML recibida de GAS en lugar de JSON:", texto);
+                throw new Error("Respuesta del servidor no válida.");
+            }
         }
 
         function inicializar() { 
@@ -250,8 +242,7 @@
             try {
                 let urlConsulta = `${urlScript}?accion=obtener_fotos&fotoA=${encodeURIComponent(fotosAppSheet.A || '')}&fotoB=${encodeURIComponent(fotosAppSheet.B || '')}&fotoC=${encodeURIComponent(fotosAppSheet.C || '')}&fotoD=${encodeURIComponent(fotosAppSheet.D || '')}`;
                 
-                // USAREMOS JSONP QUE ES 100% INMUNE A ERRORES CORS EN GOOGLE APPS SCRIPT
-                let datosFotos = await peticionJSONP(urlConsulta);
+                let datosFotos = await consultarGAS(urlConsulta);
 
                 let caras = ['A', 'B', 'C', 'D'];
                 for (let cara of caras) {
@@ -396,7 +387,7 @@
             el.setAttribute('data-cara', caraAuto);
         }
 
-        function cargarDatosGuardados() {
+        async function cargarDatosGuardados() {
             if (arquetaId === "SIN_ID") {
                 asegurarCablesTotalesCruz();
                 return;
@@ -418,23 +409,21 @@
                 } catch(e) {}
             }
 
-            // CARGA DE DATOS INICIALES VÍA JSONP LIBRE DE CORS
-            peticionJSONP(`${urlScript}?arqueta=${encodeURIComponent(arquetaId)}`)
-                .then(data => {
-                    if (data && data.elementos && data.elementos.length > 0) {
-                        lienzo.innerHTML = "";
-                        data.elementos.forEach(el => {
-                            crearElementoEnDOM(el.tipo, el.texto, parseFloat(el.x), parseFloat(el.y), parseInt(el.prisma), el.diametro, parseFloat(el.rotacion), parseFloat(el.escala), parseInt(el.cols), el.cara);
-                        });
-                        seleccionarElemento(null);
-                    } else {
-                        asegurarCablesTotalesCruz();
-                    }
-                })
-                .catch(err => {
-                    console.error("Error al cargar datos iniciales:", err);
+            try {
+                let data = await consultarGAS(`${urlScript}?arqueta=${encodeURIComponent(arquetaId)}`);
+                if (data && data.elementos && data.elementos.length > 0) {
+                    lienzo.innerHTML = "";
+                    data.elementos.forEach(el => {
+                        crearElementoEnDOM(el.tipo, el.texto, parseFloat(el.x), parseFloat(el.y), parseInt(el.prisma), el.diametro, parseFloat(el.rotacion), parseFloat(el.escala), parseInt(el.cols), el.cara);
+                    });
+                    seleccionarElemento(null);
+                } else {
                     asegurarCablesTotalesCruz();
-                });
+                }
+            } catch(e) {
+                console.warn("No se pudieron obtener datos guardados de GAS, cargando lienzo inicial.");
+                asegurarCablesTotalesCruz();
+            }
         }
 
         function seleccionarElemento(el) {
