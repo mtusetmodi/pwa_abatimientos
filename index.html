@@ -229,7 +229,9 @@
 
             try {
                 let urlConsulta = `${urlScript}?accion=obtener_fotos&fotoA=${encodeURIComponent(fotosAppSheet.A || '')}&fotoB=${encodeURIComponent(fotosAppSheet.B || '')}&fotoC=${encodeURIComponent(fotosAppSheet.C || '')}&fotoD=${encodeURIComponent(fotosAppSheet.D || '')}`;
-                let resp = await fetch(urlConsulta);
+                
+                // CONFIGURACIÓN DE FETCH ANTI-CORS CON REDIRECCIÓN
+                let resp = await fetch(urlConsulta, { method: 'GET', redirect: 'follow' });
                 let datosFotos = await resp.json();
 
                 let caras = ['A', 'B', 'C', 'D'];
@@ -241,7 +243,8 @@
                 }
                 mostrarBanner("✅ ¡Análisis automático completado!", "#28a745");
             } catch(e) {
-                alert("⚠️ Error al comunicarse con AppSheet para leer las fotos.");
+                console.error(e);
+                alert("⚠️ Error al comunicarse con AppSheet/Drive para leer las fotos.");
             }
         });
 
@@ -278,7 +281,7 @@
         });
 
         async function enviarAGeminiIA(base64Data, caraForzada) {
-            const promptText = `Analiza esta foto de la cara de una arqueta. Cuenta la cantidad total de tubos/conductos de plastico o corrugados redondos visibles (incluso si tienen cables dentro o estan vacios).
+            const promptText = `Analiza esta foto de la cara de una arqueta. Cuenta la cantidad total de tubos/conductos de plastico o corrugados redondos visibles.
             Devuelve UNICAMENTE un JSON sin markdown con este formato exacto:
             [{"prisma": 2, "diametro": "110", "cols": 2}]
             Si no hay tubos devuelve []`;
@@ -317,7 +320,6 @@
                                 let posX = rect.width * 0.40;
                                 let posY = rect.height * 0.40;
 
-                                // POSICIONAMIENTO MATEMÁTICO FIJO SEGÚN LA CARA ANALIZADA
                                 if (caraDestino === 'A') { posX = rect.width * 0.40; posY = rect.height * 0.22; }
                                 else if (caraDestino === 'C') { posX = rect.width * 0.40; posY = rect.height * 0.72; }
                                 else if (caraDestino === 'B') { posX = rect.width * 0.72; posY = rect.height * 0.45; }
@@ -397,7 +399,8 @@
                 } catch(e) {}
             }
 
-            fetch(`${urlScript}?arqueta=${encodeURIComponent(arquetaId)}`)
+            // FETCH CON MANEJO LIMPIO DE REDIRECCIONES GOOGLE SCRIPT
+            fetch(`${urlScript}?arqueta=${encodeURIComponent(arquetaId)}`, { method: 'GET', redirect: 'follow' })
                 .then(response => response.json())
                 .then(data => {
                     if (data && data.elementos && data.elementos.length > 0) {
