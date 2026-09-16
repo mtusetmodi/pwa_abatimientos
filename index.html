@@ -179,7 +179,6 @@
         }
         const arquetaId = rawArqueta.trim();
 
-        // CAPTURA DE FOTOS APPSHEET DESDE LA URL
         const fotosAppSheet = {
             A: urlParams.get('fotoA'),
             B: urlParams.get('fotoB'),
@@ -220,13 +219,11 @@
             cargarDatosGuardados();
             sincronizarPendientesOffline();
 
-            // Si vienen fotos de AppSheet en la URL, se muestra el botón de auto-rellenar
             if (fotosAppSheet.A || fotosAppSheet.B || fotosAppSheet.C || fotosAppSheet.D) {
                 document.getElementById('btn-auto-appsheet').style.display = 'flex';
             }
         }
 
-        // AUTO-PROCESADO DE LAS 4 FOTOS DE APPSHEET
         document.getElementById('btn-auto-appsheet').addEventListener('click', async () => {
             mostrarBanner("⏳ Obteniendo fotos de AppSheet...", "#6f42c1");
 
@@ -248,7 +245,6 @@
             }
         });
 
-        // FOTO MANUAL INDIVIDUAL
         document.getElementById('input-foto-directo').addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
@@ -282,9 +278,9 @@
         });
 
         async function enviarAGeminiIA(base64Data, caraForzada) {
-            const promptText = `Analiza esta imagen del interior de una pared/cara de una arqueta. 
-            Identifica los conductos o tubos visibles.
-            Devuelve UNICAMENTE un JSON sin formato markdown, sin texto extra ni comentarios, con este formato exacto:
+            const promptText = `Analiza esta imagen de la cara o pared interior de una arqueta.
+            Identifica cuántos tubos o conductos hay.
+            Devuelve ÚNICAMENTE un JSON válido sin marcas de markdown, con este formato exacto:
             [{"prisma": 4, "diametro": "110", "cols": 4}]`;
 
             const modelos = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-2.0-flash"];
@@ -318,14 +314,13 @@
                         if (Array.isArray(conductos) && conductos.length > 0) {
                             conductos.forEach(opc => {
                                 let caraDestino = caraForzada || 'A';
-                                let posX = rect.width/2 - 25;
-                                let posY = rect.height/2 - 25;
+                                let posX = rect.width * 0.40;
+                                let posY = rect.height * 0.40;
 
-                                // Coloca el elemento directamente en el área de la cara
-                                if (caraDestino === 'A') posY = rect.height * 0.20;
-                                else if (caraDestino === 'C') posY = rect.height * 0.75;
-                                else if (caraDestino === 'B') posX = rect.width * 0.75;
-                                else if (caraDestino === 'D') posX = rect.width * 0.20;
+                                if (caraDestino === 'A') { posX = rect.width * 0.40; posY = rect.height * 0.20; }
+                                else if (caraDestino === 'C') { posX = rect.width * 0.40; posY = rect.height * 0.70; }
+                                else if (caraDestino === 'B') { posX = rect.width * 0.70; posY = rect.height * 0.45; }
+                                else if (caraDestino === 'D') { posX = rect.width * 0.20; posY = rect.height * 0.45; }
 
                                 crearElementoEnDOM('conducto', '', posX, posY, opc.prisma || 1, opc.diametro || "110", 0, 1, opc.cols || opc.prisma, caraDestino);
                             });
@@ -333,8 +328,12 @@
                         }
                     }
                 } catch(e) {
-                    console.warn(`Reintentando...`);
+                    console.warn(`Error con modelo ${mod}`);
                 }
+            }
+            
+            if (!exito && caraForzada) {
+                mostrarBanner(`⚠️ No se detectaron tubos en la Cara ${caraForzada}`, "#dc3545");
             }
         }
 
