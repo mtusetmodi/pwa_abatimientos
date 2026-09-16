@@ -278,10 +278,10 @@
         });
 
         async function enviarAGeminiIA(base64Data, caraForzada) {
-            const promptText = `Analiza esta imagen de la cara o pared interior de una arqueta.
-            Identifica cuántos tubos o conductos hay.
-            Devuelve ÚNICAMENTE un JSON válido sin marcas de markdown, con este formato exacto:
-            [{"prisma": 4, "diametro": "110", "cols": 4}]`;
+            const promptText = `Analiza esta foto de la cara de una arqueta. Cuenta la cantidad total de tubos/conductos de plastico o corrugados redondos visibles (incluso si tienen cables dentro o estan vacios).
+            Devuelve UNICAMENTE un JSON sin markdown con este formato exacto:
+            [{"prisma": 2, "diametro": "110", "cols": 2}]
+            Si no hay tubos devuelve []`;
 
             const modelos = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-2.0-flash"];
             let exito = false;
@@ -317,10 +317,11 @@
                                 let posX = rect.width * 0.40;
                                 let posY = rect.height * 0.40;
 
-                                if (caraDestino === 'A') { posX = rect.width * 0.40; posY = rect.height * 0.20; }
-                                else if (caraDestino === 'C') { posX = rect.width * 0.40; posY = rect.height * 0.70; }
-                                else if (caraDestino === 'B') { posX = rect.width * 0.70; posY = rect.height * 0.45; }
-                                else if (caraDestino === 'D') { posX = rect.width * 0.20; posY = rect.height * 0.45; }
+                                // POSICIONAMIENTO MATEMÁTICO FIJO SEGÚN LA CARA ANALIZADA
+                                if (caraDestino === 'A') { posX = rect.width * 0.40; posY = rect.height * 0.22; }
+                                else if (caraDestino === 'C') { posX = rect.width * 0.40; posY = rect.height * 0.72; }
+                                else if (caraDestino === 'B') { posX = rect.width * 0.72; posY = rect.height * 0.45; }
+                                else if (caraDestino === 'D') { posX = rect.width * 0.18; posY = rect.height * 0.45; }
 
                                 crearElementoEnDOM('conducto', '', posX, posY, opc.prisma || 1, opc.diametro || "110", 0, 1, opc.cols || opc.prisma, caraDestino);
                             });
@@ -328,12 +329,8 @@
                         }
                     }
                 } catch(e) {
-                    console.warn(`Error con modelo ${mod}`);
+                    console.warn(`Error procesando con modelo ${mod}`);
                 }
-            }
-            
-            if (!exito && caraForzada) {
-                mostrarBanner(`⚠️ No se detectaron tubos en la Cara ${caraForzada}`, "#dc3545");
             }
         }
 
