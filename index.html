@@ -214,15 +214,19 @@
             { prisma: 6, diametro: 125, cols: 3, label: "6 ø 125 (3 cols x 2 filas)" }
         ];
 
-        // LECTURA DE GOOGLE APPS SCRIPT ROBUSTA MEDIANTE PROXY TEXT
+        // LECTURA DIRECTA DE TEXTO BRUTO PARA EVITAR ERRORES DE PARSEO DE SCRIPT
         async function consultarGAS(url) {
-            const resp = await fetch(url);
-            const texto = await resp.text();
             try {
+                const resp = await fetch(url);
+                const texto = await resp.text();
+                if (texto.trim().startsWith('<')) {
+                    console.warn("GAS respondió con HTML de error/redirección.");
+                    return {};
+                }
                 return JSON.parse(texto);
             } catch(e) {
-                console.error("Respuesta HTML recibida de GAS en lugar de JSON:", texto);
-                throw new Error("Respuesta del servidor no válida.");
+                console.warn("Error en consulta GAS:", e);
+                return {};
             }
         }
 
@@ -421,7 +425,7 @@
                     asegurarCablesTotalesCruz();
                 }
             } catch(e) {
-                console.warn("No se pudieron obtener datos guardados de GAS, cargando lienzo inicial.");
+                console.warn("Cargando lienzo inicial estándar.");
                 asegurarCablesTotalesCruz();
             }
         }
