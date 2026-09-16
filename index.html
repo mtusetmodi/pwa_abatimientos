@@ -170,7 +170,6 @@
             }).catch(err => console.error('Error al registrar SW:', err));
         }
 
-        // NUEVA URL DEL SCRIPT ACTUALIZADA
         const urlScript = "https://script.google.com/macros/s/AKfycbxwwuGB0KT-s1ntqKDaWvIn__W5jJxCCpY2NqdUvtwb-6WXMNMFY9RjQIPoTpHC85Lh/exec"; 
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -215,51 +214,6 @@
             { prisma: 6, diametro: 125, cols: 3, label: "6 ø 125 (3 cols x 2 filas)" }
         ];
 
-        // PETICIÓN MEDIANTE IFRAME Y POSTMESSAGE (100% INMUNE A CORS DE GOOGLE)
-        function enviarPeticionFormularioGAS(params) {
-            return new Promise((resolve) => {
-                const idIframe = 'iframe_gas_' + Date.now();
-                const iframe = document.createElement('iframe');
-                iframe.name = idIframe;
-                iframe.style.display = 'none';
-
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = urlScript;
-                form.target = idIframe;
-
-                for (let key in params) {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = key;
-                    input.value = params[key] || '';
-                    form.appendChild(input);
-                }
-
-                document.body.appendChild(iframe);
-                document.body.appendChild(form);
-
-                window.addEventListener('message', function handler(e) {
-                    if (e.data && e.data.origen === 'GAS') {
-                        window.removeEventListener('message', handler);
-                        document.body.removeChild(iframe);
-                        document.body.removeChild(form);
-                        resolve(e.data.payload);
-                    }
-                });
-
-                form.submit();
-
-                setTimeout(() => {
-                    if (document.body.contains(form)) {
-                        document.body.removeChild(iframe);
-                        document.body.removeChild(form);
-                        resolve({});
-                    }
-                }, 12000);
-            });
-        }
-
         function inicializar() { 
             renderizarListaConductos(); 
             cargarDatosGuardados();
@@ -270,29 +224,45 @@
             }
         }
 
+        // AUTO IA APPSHEET: DESCARGA DIRECTA DE LA FOTO SIN DEPENDER DE APPS SCRIPT
         document.getElementById('btn-auto-appsheet').addEventListener('click', async () => {
-            mostrarBanner("⏳ Obteniendo fotos de AppSheet...", "#6f42c1");
+            mostrarBanner("⏳ Procesando fotos de AppSheet...", "#6f42c1");
 
-            try {
-                let datosFotos = await enviarPeticionFormularioGAS({
-                    accion: "obtener_fotos",
-                    fotoA: fotosAppSheet.A || '',
-                    fotoB: fotosAppSheet.B || '',
-                    fotoC: fotosAppSheet.C || '',
-                    fotoD: fotosAppSheet.D || ''
-                });
+            let caras = ['A', 'B', 'C', 'D'];
+            let procesadas = 0;
 
-                let caras = ['A', 'B', 'C', 'D'];
-                for (let cara of caras) {
-                    if (datosFotos['foto' + cara]) {
-                        mostrarBanner(`🤖 Analizando Cara ${cara} con Gemini IA...`, "#e83e8c");
-                        await enviarAGeminiIA(datosFotos['foto' + cara], cara);
+            for (let cara of caras) {
+                let urlFoto = fotosAppSheet[cara];
+                if (urlFoto && urlFoto.trim() !== "" && urlFoto !== "null" && urlFoto !== "undefined") {
+                    try {
+                        mostrarBanner(`🤖 Descargando y analizando Cara ${cara}...`, "#e83e8c");
+                        
+                        let base64 = "";
+                        // Si nos pasa un Base64 directo o una URL
+                        if (urlFoto.startsWith("http")) {
+                            let resp = await fetch(urlFoto);
+                            let blob = await resp.blob();
+                            base64 = await new Promise((resolve) => {
+                                let reader = new FileReader();
+                                reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                                reader.readAsDataURL(blob);
+                            });
+                        } else {
+                            base64 = urlFoto;
+                        }
+
+                        await enviarAGeminiIA(base64, cara);
+                        procesadas++;
+                    } catch(e) {
+                        console.warn(`No se pudo procesar la foto de la Cara ${cara}:`, e);
                     }
                 }
+            }
+
+            if (procesadas > 0) {
                 mostrarBanner("✅ ¡Análisis automático completado!", "#28a745");
-            } catch(e) {
-                console.error(e);
-                alert("⚠️ Error al comunicarse con AppSheet/Drive para leer las fotos.");
+            } else {
+                alert("⚠️ No se encontraron rutas válidas de fotos pasadas desde AppSheet.");
             }
         });
 
@@ -425,7 +395,7 @@
             el.setAttribute('data-cara', caraAuto);
         }
 
-        async function cargarDatosGuardados() {
+        function cargarDatosGuardados() {
             if (arquetaId === "SIN_ID") {
                 asegurarCablesTotalesCruz();
                 return;
@@ -447,20 +417,7 @@
                 } catch(e) {}
             }
 
-            try {
-                let data = await enviarPeticionFormularioGAS({ accion: "obtener_datos", arqueta: arquetaId });
-                if (data && data.elementos && data.elementos.length > 0) {
-                    lienzo.innerHTML = "";
-                    data.elementos.forEach(el => {
-                        crearElementoEnDOM(el.tipo, el.texto, parseFloat(el.x), parseFloat(el.y), parseInt(el.prisma), el.diametro, parseFloat(el.rotacion), parseFloat(el.escala), parseInt(el.cols), el.cara);
-                    });
-                    seleccionarElemento(null);
-                } else {
-                    asegurarCablesTotalesCruz();
-                }
-            } catch(e) {
-                asegurarCablesTotalesCruz();
-            }
+            asegurarCablesTotalesCruz();
         }
 
         function seleccionarElemento(el) {
