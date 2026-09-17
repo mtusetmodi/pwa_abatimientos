@@ -141,20 +141,12 @@
         if (rawArqueta.includes(')')) rawArqueta = rawArqueta.split(')').pop();
         const arquetaId = rawArqueta.trim();
 
-        const fotosAppSheet = {
-            A: urlParams.get('fotoA'),
-            B: urlParams.get('fotoB'),
-            C: urlParams.get('fotoC'),
-            D: urlParams.get('fotoD')
-        };
-
         document.getElementById('titulo-app').innerText = "Arqueta: " + arquetaId;
         let estadoLienzo = { id_arqueta: arquetaId, elementos: [], imagen_base64: "" };
         const lienzo = document.getElementById('lienzo');
 
         let elementosSeleccionados = new Set();
         let modoSeleccionMultiple = false;
-        let cablesVisibles = true;
 
         const opcionesPredefinidas = [
             { prisma: 1, diametro: 110, cols: 1, label: "1 ø 110" },
@@ -173,7 +165,7 @@
         function cargarOAutoGenerar() {
             mostrarBanner("⏳ Cargando esquema...", "#6f42c1");
 
-            let urlConsulta = `${urlScript}?arqueta=${encodeURIComponent(arquetaId)}&fotoA=${encodeURIComponent(fotosAppSheet.A || '')}&fotoB=${encodeURIComponent(fotosAppSheet.B || '')}&fotoC=${encodeURIComponent(fotosAppSheet.C || '')}&fotoD=${encodeURIComponent(fotosAppSheet.D || '')}`;
+            let urlConsulta = `${urlScript}?arqueta=${encodeURIComponent(arquetaId)}`;
 
             fetch(urlConsulta)
                 .then(r => r.json())
@@ -183,7 +175,7 @@
                         data.elementos.forEach(el => {
                             crearElementoEnDOM(el.tipo, el.texto, parseFloat(el.x), parseFloat(el.y), parseInt(el.prisma), el.diametro, parseFloat(el.rotacion), parseFloat(el.escala), parseInt(el.cols), el.cara);
                         });
-                        mostrarBanner("✅ Esquema listo", "#28a745");
+                        mostrarBanner("✅ Esquema cargado", "#28a745");
                     } else {
                         asegurarCablesTotalesCruz();
                         mostrarBanner("✨ Listo para editar", "#17a2b8");
@@ -191,6 +183,7 @@
                     seleccionarElemento(null);
                 })
                 .catch(err => {
+                    console.error("Error al cargar datos:", err);
                     asegurarCablesTotalesCruz();
                 });
         }
