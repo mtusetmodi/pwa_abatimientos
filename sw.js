@@ -1,4 +1,4 @@
-const CACHE_NAME = 'abatiment-pwa-v58'
+const CACHE_NAME = 'abatiment-pwa-v70'
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
