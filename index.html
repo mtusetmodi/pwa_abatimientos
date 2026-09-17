@@ -224,9 +224,9 @@
             }
         }
 
-        // AUTO IA CON OBTENCIÓN ROBUSTA DE BASE64 DESDE GOOGLE DRIVE VÍA POST APPS SCRIPT
+        // AUTO IA HÍBRIDO: DESCARGA DIRECTA + FALLBACK A GOOGLE APPS SCRIPT
         document.getElementById('btn-auto-appsheet').addEventListener('click', async () => {
-            mostrarBanner("⏳ Obteniendo fotos desde Google Drive...", "#6f42c1");
+            mostrarBanner("⏳ Procesando fotos...", "#6f42c1");
 
             let caras = ['A', 'B', 'C', 'D'];
             let procesadas = 0;
@@ -235,27 +235,48 @@
                 let rutaFoto = fotosAppSheet[cara];
                 if (rutaFoto && rutaFoto.trim() !== "" && rutaFoto !== "null" && rutaFoto !== "undefined") {
                     try {
-                        mostrarBanner(`🤖 Buscando y analizando foto de la Cara ${cara}...`, "#e83e8c");
+                        mostrarBanner(`🤖 Descargando y analizando Cara ${cara}...`, "#e83e8c");
+                        let base64Limpio = "";
 
-                        // Petición POST a Apps Script para traer el Base64 limpio sin depender de redirecciones GET
-                        let bodyData = new URLSearchParams();
-                        bodyData.append('accion', 'obtener_foto_individual');
-                        bodyData.append('ruta', rutaFoto);
+                        // Intento 1: Si es una URL http (de AppSheet), intentamos fetch directo
+                        if (rutaFoto.startsWith("http")) {
+                            try {
+                                let resp = await fetch(rutaFoto);
+                                if (resp.ok) {
+                                    let blob = await resp.blob();
+                                    base64Limpio = await new Promise((resolve) => {
+                                        let reader = new FileReader();
+                                        reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                                        reader.readAsDataURL(blob);
+                                    });
+                                }
+                            } catch(eFetch) {
+                                console.warn("Fetch directo falló, reintentando vía Apps Script...");
+                            }
+                        }
 
-                        let resp = await fetch(urlScript, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                            body: bodyData
-                        });
+                        // Intento 2: Si no tenemos base64 o era una ruta de Drive, usamos el servidor GAS
+                        if (!base64Limpio) {
+                            let bodyData = new URLSearchParams();
+                            bodyData.append('accion', 'obtener_foto_individual');
+                            bodyData.append('ruta', rutaFoto);
 
-                        let resJson = await resp.json();
+                            let resp = await fetch(urlScript, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                                body: bodyData
+                            });
 
-                        if (resJson && resJson.base64) {
-                            let base64Limpio = resJson.base64.replace(/[\r\n\s]/g, "");
+                            let resJson = await resp.json();
+                            if (resJson && resJson.base64) {
+                                base64Limpio = resJson.base64;
+                            }
+                        }
+
+                        if (base64Limpio) {
+                            base64Limpio = base64Limpio.replace(/[\r\n\s]/g, "");
                             await enviarAGeminiIA(base64Limpio, cara);
                             procesadas++;
-                        } else {
-                            console.warn(`No se pudo obtener la imagen en Base64 para Cara ${cara}`);
                         }
                     } catch(e) {
                         console.warn(`Error al recuperar o analizar la foto de la Cara ${cara}:`, e);
@@ -266,7 +287,7 @@
             if (procesadas > 0) {
                 mostrarBanner("✅ ¡Análisis automático completado!", "#28a745");
             } else {
-                alert("⚠️ No se pudieron recuperar las fotos desde Google Drive.");
+                alert("⚠️ No se pudieron obtener las imágenes. Comprueba el permiso de firma de AppSheet o el despliegue del Script.");
             }
         });
 
