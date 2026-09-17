@@ -224,7 +224,7 @@
             }
         }
 
-        // AUTO IA APPSHEET: DESCARGA DIRECTA DE LA FOTO SIN DEPENDER DE APPS SCRIPT
+        // AUTO IA APPSHEET CON DESCARGA Y LIMPIEZA BASE64 RIGUROSA
         document.getElementById('btn-auto-appsheet').addEventListener('click', async () => {
             mostrarBanner("⏳ Procesando fotos de AppSheet...", "#6f42c1");
 
@@ -237,22 +237,38 @@
                     try {
                         mostrarBanner(`🤖 Descargando y analizando Cara ${cara}...`, "#e83e8c");
                         
-                        let base64 = "";
-                        // Si nos pasa un Base64 directo o una URL
+                        let base64Puro = "";
+
                         if (urlFoto.startsWith("http")) {
                             let resp = await fetch(urlFoto);
                             let blob = await resp.blob();
-                            base64 = await new Promise((resolve) => {
+
+                            base64Puro = await new Promise((resolve, reject) => {
                                 let reader = new FileReader();
-                                reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                                reader.onloadend = () => {
+                                    let result = reader.result;
+                                    if (result && result.includes(',')) {
+                                        resolve(result.split(',')[1]);
+                                    } else {
+                                        reject("Formato base64 no válido");
+                                    }
+                                };
+                                reader.onerror = reject;
                                 reader.readAsDataURL(blob);
                             });
                         } else {
-                            base64 = urlFoto;
+                            base64Puro = urlFoto.includes(',') ? urlFoto.split(',')[1] : urlFoto;
                         }
 
-                        await enviarAGeminiIA(base64, cara);
-                        procesadas++;
+                        // Limpiar cualquier salto de línea o espacio en blanco que corrompa la carga útil del JSON
+                        base64Puro = base64Puro.replace(/[\r\n\s]/g, "");
+
+                        if (base64Puro && base64Puro.length > 100) {
+                            await enviarAGeminiIA(base64Puro, cara);
+                            procesadas++;
+                        } else {
+                            console.warn(`La imagen Base64 para la Cara ${cara} está vacía o no es válida.`);
+                        }
                     } catch(e) {
                         console.warn(`No se pudo procesar la foto de la Cara ${cara}:`, e);
                     }
@@ -262,7 +278,7 @@
             if (procesadas > 0) {
                 mostrarBanner("✅ ¡Análisis automático completado!", "#28a745");
             } else {
-                alert("⚠️ No se encontraron rutas válidas de fotos pasadas desde AppSheet.");
+                alert("⚠️ No se pudieron descargar imágenes válidas desde las URLs de AppSheet.");
             }
         });
 
@@ -290,7 +306,8 @@
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
                         
-                        enviarAGeminiIA(canvas.toDataURL('image/jpeg', 0.75).split(',')[1], null);
+                        let base64 = canvas.toDataURL('image/jpeg', 0.75).split(',')[1];
+                        enviarAGeminiIA(base64, null);
                     };
                     img.src = event.target.result;
                 };
@@ -317,7 +334,12 @@
                             contents: [{
                                 parts: [
                                     { text: promptText },
-                                    { inline_data: { mime_type: "image/jpeg", data: base64Data } }
+                                    { 
+                                        inline_data: { 
+                                            mime_type: "image/jpeg", 
+                                            data: base64Data 
+                                        } 
+                                    }
                                 ]
                             }]
                         })
@@ -325,7 +347,7 @@
 
                     const data = await response.json();
 
-                    if (data.candidates && data.candidates[0].content.parts[0].text) {
+                    if (data.candidates && data.candidates[0].content && data.candidates[0].content.parts[0].text) {
                         let resultText = data.candidates[0].content.parts[0].text.trim();
                         resultText = resultText.replace(/```json/gi, '').replace(/```/g, '').trim();
 
@@ -347,9 +369,11 @@
                             });
                             exito = true;
                         }
+                    } else if (data.error) {
+                        console.warn(`API Error con modelo ${mod}:`, data.error.message);
                     }
                 } catch(e) {
-                    console.warn(`Error procesando con modelo ${mod}`);
+                    console.warn(`Error procesando con modelo ${mod}:`, e);
                 }
             }
         }
