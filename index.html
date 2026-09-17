@@ -171,19 +171,21 @@
                 .then(r => r.json())
                 .then(data => {
                     lienzo.innerHTML = "";
+                    asegurarCablesTotalesCruz();
+                    
                     if (data && data.elementos && data.elementos.length > 0) {
                         data.elementos.forEach(el => {
                             crearElementoEnDOM(el.tipo, el.texto, parseFloat(el.x), parseFloat(el.y), parseInt(el.prisma), el.diametro, parseFloat(el.rotacion), parseFloat(el.escala), parseInt(el.cols), el.cara);
                         });
                         mostrarBanner("✅ Esquema cargado", "#28a745");
                     } else {
-                        asegurarCablesTotalesCruz();
                         mostrarBanner("✨ Listo para editar", "#17a2b8");
                     }
                     seleccionarElemento(null);
                 })
                 .catch(err => {
                     console.error("Error al cargar datos:", err);
+                    lienzo.innerHTML = "";
                     asegurarCablesTotalesCruz();
                 });
         }
