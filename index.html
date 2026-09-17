@@ -306,23 +306,22 @@
             }
         });
 
-        // FUNCIÓN DE GEMINI IA CON PROMPT FLEXIBLE Y ALTA SENSIBILIDAD
+        // FUNCIÓN DE GEMINI IA ACTUALIZADA A MODELOS ACTIVOS DE LA API
         async function enviarAGeminiIA(base64Data, caraForzada) {
-            const promptText = `Eres un experto inspector de infraestructuras subterráneas y telecomunicaciones.
-            Analiza esta foto del interior de la cara de una arqueta.
-            
-            TAREA: Detecta todas las entradas/salidas de tubos, conductos corrugados, prismas de obra o tubos de plástico (PVC/PE) visibles en las paredes de la arqueta, aunque estén sucios, oscuros o parcialmente vacíos/ocupados.
+            const promptText = `ANALIZA ESTA FOTO DE UNA ARQUETA DE TELECOMUNICACIONES/ELECTRICIDAD.
+            Debes buscar cualquier orificio, entrada de tubo, conducto corrugado o tubo de PVC/PE en las paredes, aunque esté sucio, oscuro, con cables o parcialmente tapado.
 
-            Responde ÚNICAMENTE un JSON válido sin texto ni explicaciones adicionales con este formato:
-            [{"prisma": 2, "diametro": "110", "cols": 2}]
+            SI DETECTAS AL MENOS UN TUBO O ENTRADA, responde UNICAMENTE un JSON con este formato exacto:
+            [{"prisma": 1, "diametro": "110", "cols": 1}]
 
-            REGLAS:
-            1. "prisma": cantidad total de orificios/tubos agrupados en ese bloque.
-            2. "diametro": estimación del diámetro ("110", "125", "160", "200"). Si dudas, usa "110".
-            3. "cols": columnas de tubos en la agrupación (ejemplo: 2 cols x 1 fila = cols: 2).
-            4. Si estás convencido de que la pared está totalmente lisa y no hay ningún hueco/tubo, responde: []`;
+            Reglas:
+            - "prisma": Número de tubos/huecos que ves juntos. Si ves 1 tubo, pon 1. Si ves varios, cuenta cuántos.
+            - "diametro": "110" por defecto (o "125", "160").
+            - "cols": Número de columnas horizontales.
+            - SI DE VERDAD NO HAY ABSOLUTAMENTE NINGÚN TUBO NI AGUJERO, responde: []`;
 
-            const modelos = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-flash-8b"];
+            // Modelos vigentes
+            const modelos = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.5-flash-lite"];
             let detectadoAlgo = false;
 
             for (const mod of modelos) {
@@ -344,8 +343,7 @@
                                 ]
                             }],
                             generationConfig: {
-                                temperature: 0.1,
-                                responseMimeType: "application/json"
+                                temperature: 0.4
                             }
                         })
                     });
@@ -354,6 +352,9 @@
 
                     if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0].text) {
                         let resultText = data.candidates[0].content.parts[0].text.trim();
+                        console.log(`[Respuesta Gemini ${mod}]:`, resultText);
+
+                        resultText = resultText.replace(/```json/gi, '').replace(/```/g, '').trim();
                         
                         let conductos = [];
                         try {
@@ -381,7 +382,7 @@
                             detectadoAlgo = true;
                         }
                     } else if (data.error) {
-                        console.warn(`Error en respuesta Gemini (${mod}):`, data.error.message);
+                        console.error(`Error en Gemini ${mod}:`, data.error);
                     }
                 } catch(e) {
                     console.warn(`Fallo al consultar modelo ${mod}:`, e);
