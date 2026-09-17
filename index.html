@@ -19,7 +19,7 @@
         
         #banner-estado {
             width: 100%; max-width: 500px; padding: 6px; text-align: center; font-size: 12px; font-weight: bold;
-            display: none; color: white; transition: all 0.3s ease; z-index: 20;
+            display: none; color: white; transition: all 0.3s ease;
         }
 
         #contenedor-lienzo {
@@ -50,22 +50,36 @@
             overflow: hidden;
         }
 
-        .controles { width: 100%; max-width: 420px; display: flex; justify-content: space-between; gap: 4px; padding: 6px 8px; background: #fff; }
-        .controles button { padding: 9px 4px; font-size: 11px; background: #007bff; color: white; border: none; border-radius: 8px; flex: 1; font-weight: bold; cursor: pointer; text-align: center;}
-
+        .controles { width: 100%; max-width: 420px; display: flex; justify-content: space-around; padding: 6px 8px; background: #fff; }
+        .controles button { padding: 9px; font-size: 14px; background: #007bff; color: white; border: none; border-radius: 8px; width: 48%; font-weight: bold; cursor: pointer;}
+        
         .bloque-herramientas {
             width: 100%; max-width: 420px; background: #f8f9fa; border-top: 1px solid #ddd; padding: 6px 8px; display: flex; flex-direction: column; gap: 5px;
         }
         
-        .fila-herramientas { display: flex; justify-content: space-between; width: 100%; gap: 10px; }
-        .fila-herramientas button { flex: 1; padding: 8px 2px; font-size: 12px; font-weight: bold; border: none; border-radius: 8px; color: white; background: #6c757d; text-align: center; cursor: pointer; }
-        #btn-eliminar { background: #dc3545; } 
-        
-        .seccion-cables { width: 100%; max-width: 420px; background: #e9ecef; border-top: 2px solid #ced4da; padding: 6px; display: flex; justify-content: center; }
-        #btn-toggle-cables { width: 100%; padding: 10px; font-size: 13px; font-weight: bold; border: none; border-radius: 8px; color: white; background: #6f42c1; text-align: center; cursor: pointer; }
+        .fila-herramientas {
+            display: flex; justify-content: space-between; width: 100%; gap: 10px;
+        }
 
-        #modal-opciones { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 100; align-items: flex-end; justify-content: center; }
-        .modal-content { background: white; width: 100%; max-width: 420px; border-radius: 20px 20px 0 0; padding: 20px; max-height: 80vh; overflow-y: auto; text-align: center;}
+        .fila-herramientas button {
+            flex: 1; padding: 8px 2px; font-size: 12px; font-weight: bold; border: none; border-radius: 8px; color: white; background: #6c757d; text-align: center; cursor: pointer;
+        }
+
+        .fila-herramientas button:active { background: #5a6268; }
+
+        #btn-eliminar { background: #dc3545; } 
+        #btn-eliminar:active { background: #c82333; }
+        
+        .seccion-cables {
+            width: 100%; max-width: 420px; background: #e9ecef; border-top: 2px solid #ced4da; padding: 6px; display: flex; justify-content: center;
+        }
+        
+        #btn-toggle-cables { 
+            width: 100%; padding: 10px; font-size: 13px; font-weight: bold; border: none; border-radius: 8px; color: white; background: #6f42c1; text-align: center; cursor: pointer;
+        }
+
+        #modal-opciones { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 100; align-items: flex-end; justify-content: center; }
+        .modal-content { background: white; width: 100%; max-width: 420px; border-radius: 20px 20px 0 0; padding: 20px; max-height: 70vh; overflow-y: auto; }
         .modal-content h3 { margin-top: 0; border-bottom: 2px solid #dc3545; padding-bottom: 10px; color: #dc3545; }
         .opcion-lista { padding: 15px; border-bottom: 1px solid #eee; font-size: 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer;}
 
@@ -74,14 +88,23 @@
             padding: 2px; background: transparent; touch-action: none; cursor: grab;
             border-radius: 6px; border: 2px solid transparent;
         }
+        
         .elemento-draggable.selected { border-color: #007bff; box-shadow: 0 0 10px rgba(0, 123, 255, 0.6); background: rgba(0, 123, 255, 0.15); z-index: 50; }
 
         .titulo-conducto { font-weight: bold; font-size: 13px; margin-bottom: 2px; color: #000; text-align: center; }
         .grid-tubos { display: grid; gap: 2px; justify-items: center; }
+        
         .tubo-ind { width: 22px; height: 22px; border: 2px solid #2b4c7e; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; background: transparent; color: #8b5a2b; }
 
         .texto-libre { font-size: 14px; font-weight: bold; color: #000; padding: 1px 3px; background: transparent; white-space: nowrap; }
         .texto-libre.cables-totales { color: #000; letter-spacing: 0.5px; }
+
+        @media (min-width: 500px) {
+            #contenedor-lienzo {
+                width: 420px;
+                height: 420px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -98,7 +121,7 @@
 
     <div class="controles">
         <button id="btn-add-conducto">+ Conducto</button>
-        <button id="btn-add-texto">+ Texto</button>
+        <button id="btn-add-texto">+ Texto / Nota</button>
     </div>
 
     <div class="bloque-herramientas">
@@ -122,70 +145,143 @@
 
     <div id="modal-opciones">
         <div class="modal-content">
-            <h3>Seleccionar Conducto</h3>
+            <h3>Seleccionar Conducto y Formato</h3>
             <div id="lista-conductos"></div>
-            <div class="opcion-lista" style="color:#007bff; font-weight:bold;" onclick="abrirPersonalizado()">+ Crear Personalizado...</div>
-            <button onclick="cerrarModal()" style="width:100%; padding:15px; margin-top:15px; background:#6c757d; color:white; border-radius:8px;">Cancelar</button>
+            <div class="opcion-lista" style="color:#007bff; font-weight:bold;" onclick="abrirPersonalizado()">
+                + Crear Personalizado...
+            </div>
+            <button onclick="cerrarModal()" style="width:100%; padding:15px; margin-top:15px; background:#6c757d; color:white; border-radius:8px; font-size:16px; cursor:pointer;">Cancelar</button>
         </div>
     </div>
 
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js').catch(err => console.error(err));
+            navigator.serviceWorker.register('./sw.js').then(() => {
+                console.log('Service Worker Registrado Exitosamente.');
+            }).catch(err => console.error('Error al registrar SW:', err));
         }
 
-        const urlScript = "https://script.google.com/macros/s/AKfycbxaaY2_JWJJ1O7cCG7Uqypw-7BtwIco8XxDPMBWgeyS2xzquy7-35p21qJvUopZ8EGs/exec"; 
+        const urlScript = "https://script.google.com/macros/s/AKfycbzgetL9wcujKF9VIF5VsNPCytAi21s-EeFKPdt-kgpJFIxC7Jb_mku6YRbgE477VOty/exec"; 
 
         const urlParams = new URLSearchParams(window.location.search);
         let rawArqueta = urlParams.get('arqueta') || "SIN_ID";
-        if (rawArqueta.includes(')')) rawArqueta = rawArqueta.split(')').pop();
+        if (rawArqueta.includes(')')) {
+            rawArqueta = rawArqueta.split(')').pop();
+        }
         const arquetaId = rawArqueta.trim();
 
         document.getElementById('titulo-app').innerText = "Arqueta: " + arquetaId;
+
         let estadoLienzo = { id_arqueta: arquetaId, elementos: [], imagen_base64: "" };
         const lienzo = document.getElementById('lienzo');
 
         let elementosSeleccionados = new Set();
         let modoSeleccionMultiple = false;
+        let cablesVisibles = true;
 
         const opcionesPredefinidas = [
-            { prisma: 1, diametro: 110, cols: 1, label: "1 ø 110" },
-            { prisma: 2, diametro: 110, cols: 2, label: "2 ø 110" },
-            { prisma: 3, diametro: 110, cols: 3, label: "3 ø 110" },
-            { prisma: 4, diametro: 110, cols: 4, label: "4 ø 110" },
-            { prisma: 1, diametro: 125, cols: 1, label: "1 ø 125" },
-            { prisma: 2, diametro: 125, cols: 2, label: "2 ø 125" }
+            { prisma: 1, diametro: 110, cols: 1, label: "1 ø 110 (Horizontal)" },
+            { prisma: 2, diametro: 110, cols: 2, label: "2 ø 110 (2x1 Horizontal)" },
+            { prisma: 3, diametro: 110, cols: 3, label: "3 ø 110 (3x1 Horizontal)" },
+            { prisma: 4, diametro: 110, cols: 4, label: "4 ø 110 (4x1 Horizontal)" },
+            { prisma: 5, diametro: 110, cols: 5, label: "5 ø 110 (5x1 Horizontal)" },
+            { prisma: 6, diametro: 110, cols: 6, label: "6 ø 110 (6x1 Horizontal)" },
+            { prisma: 4, diametro: 110, cols: 2, label: "4 ø 110 (2 cols x 2 filas)" },
+            { prisma: 6, diametro: 110, cols: 3, label: "6 ø 110 (3 cols x 2 filas)" },
+            { prisma: 1, diametro: 125, cols: 1, label: "1 ø 125 (Horizontal)" },
+            { prisma: 2, diametro: 125, cols: 2, label: "2 ø 125 (2x1 Horizontal)" },
+            { prisma: 3, diametro: 125, cols: 3, label: "3 ø 125 (3x1 Horizontal)" },
+            { prisma: 4, diametro: 125, cols: 4, label: "4 ø 125 (4x1 Horizontal)" },
+            { prisma: 5, diametro: 125, cols: 5, label: "5 ø 125 (5x1 Horizontal)" },
+            { prisma: 6, diametro: 125, cols: 6, label: "6 ø 125 (6x1 Horizontal)" },
+            { prisma: 4, diametro: 125, cols: 2, label: "4 ø 125 (2 cols x 2 filas)" },
+            { prisma: 6, diametro: 125, cols: 3, label: "6 ø 125 (3 cols x 2 filas)" }
         ];
 
         function inicializar() { 
             renderizarListaConductos(); 
-            cargarEsquema();
+            cargarDatosGuardados();
+            sincronizarPendientesOffline();
         }
 
-        function cargarEsquema() {
-            mostrarBanner("⏳ Cargando...", "#6f42c1");
+        const btnToggleCables = document.getElementById('btn-toggle-cables');
+        btnToggleCables.addEventListener('click', () => {
+            cablesVisibles = !cablesVisibles;
+            const elementosCables = document.querySelectorAll('.elemento-draggable[data-tipo="cables"]');
+            
+            if (!cablesVisibles) {
+                elementosCables.forEach(el => el.style.display = 'none');
+                btnToggleCables.innerText = "👁️ Mostrar (0,0)";
+                btnToggleCables.style.backgroundColor = "#6c757d";
+                mostrarBanner("🙈 Se han ocultado los (0,0) en este abatimiento", "#6c757d");
+            } else {
+                if (elementosCables.length === 0) {
+                    asegurarCablesTotalesCruz();
+                } else {
+                    elementosCables.forEach(el => el.style.display = 'flex');
+                }
+                btnToggleCables.innerText = "👁️ Ocultar (0,0)";
+                btnToggleCables.style.backgroundColor = "#6f42c1";
+                mostrarBanner("👁️ Visibles los (0,0)", "#6f42c1");
+            }
+        });
 
-            let urlConsulta = `${urlScript}?arqueta=${encodeURIComponent(arquetaId)}`;
+        function calcularCaraPorPosicion(x, y) {
+            const rect = lienzo.getBoundingClientRect();
+            const relX = x / (rect.width || 300);
+            const relY = y / (rect.height || 300);
 
-            fetch(urlConsulta)
-                .then(r => r.json())
+            if (relY < 0.35) return 'A';
+            if (relY > 0.65) return 'C';
+            if (relX > 0.60) return 'B';
+            if (relX < 0.40) return 'D';
+            return 'A';
+        }
+
+        function actualizarCaraDeElemento(el) {
+            let x = parseFloat(el.getAttribute('data-x')) || 0;
+            let y = parseFloat(el.getAttribute('data-y')) || 0;
+            let caraAuto = calcularCaraPorPosicion(x, y);
+            el.setAttribute('data-cara', caraAuto);
+        }
+
+        function cargarDatosGuardados() {
+            if (arquetaId === "SIN_ID") {
+                asegurarCablesTotalesCruz();
+                return;
+            }
+
+            let localData = localStorage.getItem(`arqueta_${arquetaId}`);
+            if (localData) {
+                try {
+                    let parsed = JSON.parse(localData);
+                    if (parsed && parsed.elementos && parsed.elementos.length > 0) {
+                        lienzo.innerHTML = "";
+                        parsed.elementos.forEach(el => {
+                            crearElementoEnDOM(el.tipo, el.texto, parseFloat(el.x), parseFloat(el.y), parseInt(el.prisma), el.diametro, parseFloat(el.rotacion), parseFloat(el.escala), parseInt(el.cols), el.cara);
+                        });
+                        seleccionarElemento(null);
+                        mostrarBanner("📦 Cargado desde memoria offline del dispositivo", "#17a2b8");
+                        return;
+                    }
+                } catch(e) {}
+            }
+
+            fetch(`${urlScript}?arqueta=${encodeURIComponent(arquetaId)}`)
+                .then(response => response.json())
                 .then(data => {
-                    lienzo.innerHTML = "";
-                    
                     if (data && data.elementos && data.elementos.length > 0) {
+                        lienzo.innerHTML = "";
                         data.elementos.forEach(el => {
                             crearElementoEnDOM(el.tipo, el.texto, parseFloat(el.x), parseFloat(el.y), parseInt(el.prisma), el.diametro, parseFloat(el.rotacion), parseFloat(el.escala), parseInt(el.cols), el.cara);
                         });
-                        mostrarBanner("✅ Esquema cargado", "#28a745");
+                        seleccionarElemento(null);
                     } else {
                         asegurarCablesTotalesCruz();
-                        mostrarBanner("✨ Listo para editar", "#17a2b8");
                     }
-                    seleccionarElemento(null);
                 })
                 .catch(err => {
                     console.error("Error al cargar datos:", err);
-                    lienzo.innerHTML = "";
                     asegurarCablesTotalesCruz();
                 });
         }
@@ -196,6 +292,7 @@
                 elementosSeleccionados.clear();
                 return;
             }
+
             if (modoSeleccionMultiple) {
                 if (elementosSeleccionados.has(el)) {
                     el.classList.remove('selected');
@@ -212,7 +309,9 @@
             }
         }
 
-        lienzo.addEventListener('click', (e) => { if(e.target === lienzo) seleccionarElemento(null); });
+        lienzo.addEventListener('click', (e) => {
+            if(e.target === lienzo) seleccionarElemento(null);
+        });
 
         const btnMulti = document.getElementById('btn-multi');
         btnMulti.addEventListener('click', () => {
@@ -222,7 +321,9 @@
         });
 
         document.getElementById('btn-eliminar').addEventListener('click', () => {
-            elementosSeleccionados.forEach(el => el.remove());
+            elementosSeleccionados.forEach(el => {
+                el.remove();
+            });
             elementosSeleccionados.clear();
         });
 
@@ -231,9 +332,12 @@
                 let x = parseFloat(el.getAttribute('data-x')) || 0;
                 let y = parseFloat(el.getAttribute('data-y')) || 0;
                 let rot = el.getAttribute('data-rotacion') || 0;
-                let scale = (parseFloat(el.getAttribute('data-scale')) || 1) + delta;
+                let scale = parseFloat(el.getAttribute('data-scale')) || 1;
+
+                scale += delta;
                 if (scale < 0.4) scale = 0.4;
                 if (scale > 3) scale = 3;
+
                 el.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg) scale(${scale})`;
                 el.setAttribute('data-scale', scale);
             });
@@ -245,6 +349,7 @@
                 let y = parseFloat(el.getAttribute('data-y')) || 0;
                 let rot = (parseFloat(el.getAttribute('data-rotacion')) || 0) + grados;
                 let scale = parseFloat(el.getAttribute('data-scale')) || 1;
+
                 el.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg) scale(${scale})`;
                 el.setAttribute('data-rotacion', rot);
             });
@@ -255,14 +360,22 @@
         document.getElementById('btn-rotar-izq').addEventListener('click', () => cambiarRotacionManual(-90));
         document.getElementById('btn-rotar-der').addEventListener('click', () => cambiarRotacionManual(90));
 
+        // COORDENADAS EXACTAS SOLICITADAS: CARA D = 0.060 / CARA B = 0.830
         function asegurarCablesTotalesCruz() {
             const rect = lienzo.getBoundingClientRect();
             const w = rect.width || 300;
             const h = rect.height || 300;
-            crearElementoEnDOM('cables', '(0,0)', w * 0.44, h * 0.095, 0, 0, 0, 1, 0, 'A');
-            crearElementoEnDOM('cables', '(0,0)', w * 0.830, h * 0.50, 0, 0, 90, 1, 0, 'B'); 
-            crearElementoEnDOM('cables', '(0,0)', w * 0.44, h * 0.875, 0, 0, 0, 1, 0, 'C'); 
-            crearElementoEnDOM('cables', '(0,0)', w * 0.060, h * 0.50, 0, 0, -90, 1, 0, 'D'); 
+
+            let posA = { x: w * 0.44, y: h * 0.095 };
+            let posB = { x: w * 0.830, y: h * 0.50 }; // Ajustado a 0.830
+            let posC = { x: w * 0.44, y: h * 0.875 };
+            let posD = { x: w * 0.060, y: h * 0.50 }; // Ajustado a 0.060
+
+            crearElementoEnDOM('cables', '(0,0)', posA.x, posA.y, 0, 0, 0, 1, 0, 'A');
+            crearElementoEnDOM('cables', '(0,0)', posB.x, posB.y, 0, 0, 90, 1, 0, 'B'); 
+            crearElementoEnDOM('cables', '(0,0)', posC.x, posC.y, 0, 0, 0, 1, 0, 'C'); 
+            crearElementoEnDOM('cables', '(0,0)', posD.x, posD.y, 0, 0, -90, 1, 0, 'D'); 
+
             seleccionarElemento(null);
         }
 
@@ -270,7 +383,7 @@
             let html = "";
             opcionesPredefinidas.forEach((opc, idx) => {
                 html += `<div class="opcion-lista" onclick="seleccionarConductoPorIndice(${idx})">
-                            <div>○ ${opc.label}</div>
+                            <div class="opcion-info">○ ${opc.label}</div>
                             <span style="font-size:12px; color:#6c757d;">Elegir</span>
                          </div>`;
             });
@@ -284,7 +397,8 @@
             cerrarModal();
             let opc = opcionesPredefinidas[idx];
             const rect = lienzo.getBoundingClientRect();
-            crearElementoEnDOM('conducto', '', rect.width/2 - 25, rect.height/2 - 25, opc.prisma, opc.diametro, 0, 1, opc.cols, 'A');
+            let caraAuto = calcularCaraPorPosicion(rect.width/2 - 25, rect.height/2 - 25);
+            crearElementoEnDOM('conducto', '', rect.width/2 - 25, rect.height/2 - 25, opc.prisma, opc.diametro, 0, 1, opc.cols, caraAuto);
         }
 
         function abrirPersonalizado() {
@@ -293,27 +407,45 @@
             if (!p) return;
             let d = prompt("Diámetro:");
             if (!d) return;
+            
+            let orientacion = confirm("¿Quieres colocar los tubos en HORIZONTAL?\n\n- Pulsa ACEPTAR para Línea Horizontal (1 fila)\n- Pulsa CANCELAR para Línea Vertical (1 columna)");
+            
+            let cols = 1;
+            if (orientacion) {
+                cols = parseInt(p);
+            } else {
+                cols = 1;
+            }
+
             const rect = lienzo.getBoundingClientRect();
-            crearElementoEnDOM('conducto', '', rect.width/2 - 25, rect.height/2 - 25, parseInt(p), d, 0, 1, parseInt(p), 'A');
+            let caraAuto = calcularCaraPorPosicion(rect.width/2 - 25, rect.height/2 - 25);
+            crearElementoEnDOM('conducto', '', rect.width/2 - 25, rect.height/2 - 25, parseInt(p), d, 0, 1, cols, caraAuto);
         }
 
         document.getElementById('btn-add-texto').addEventListener('click', () => {
             let texto = prompt("Escribe tu nota:");
             const rect = lienzo.getBoundingClientRect();
-            if(texto) crearElementoEnDOM('texto', texto, rect.width/2 - 25, rect.height/2 - 25, 0, 0, 0, 1, 0, 'A');
+            let caraAuto = calcularCaraPorPosicion(rect.width/2 - 25, rect.height/2 - 25);
+            if(texto) crearElementoEnDOM('texto', texto, rect.width/2 - 25, rect.height/2 - 25, 0, 0, 0, 1, 0, caraAuto);
         });
 
         function renderizarTubosInternos(div, prisma, diametro, cols) {
             prisma = parseInt(prisma);
             cols = parseInt(cols) || (prisma > 3 ? 2 : prisma);
+
             let filas = Math.ceil(prisma / cols);
-            let inner = `<div class="titulo-conducto">${prisma} ø${diametro}</div><div class="grid-tubos" style="grid-template-columns: repeat(${cols}, 1fr);">`;
+            let inner = `<div class="titulo-conducto">${prisma} ø${diametro}</div>`;
+            inner += `<div class="grid-tubos" style="grid-template-columns: repeat(${cols}, 1fr);">`;
+            
             for (let r = filas - 1; r >= 0; r--) {
                 for (let c = 0; c < cols; c++) {
                     let num = r * cols + c + 1;
-                    if (num <= prisma) inner += `<div class="tubo-ind">${num}</div>`;
+                    if (num <= prisma) {
+                        inner += `<div class="tubo-ind">${num}</div>`;
+                    }
                 }
             }
+            
             inner += `</div>`;
             div.innerHTML = inner;
         }
@@ -329,62 +461,113 @@
             div.setAttribute('data-rotacion', rotacion);
             div.setAttribute('data-scale', escala);
             div.setAttribute('data-cols', cols || 2);
-            div.setAttribute('data-cara', cara || 'A');
+            
+            let caraCalculada = cara || calcularCaraPorPosicion(x, y);
+            div.setAttribute('data-cara', caraCalculada);
 
             div.style.transform = `translate(${x}px, ${y}px) rotate(${rotacion}deg) scale(${escala})`;
-            div.addEventListener('click', function(e) { seleccionarElemento(this); e.stopPropagation(); });
+
+            div.addEventListener('click', function(e) {
+                seleccionarElemento(this);
+                e.stopPropagation();
+            });
 
             if(tipo === 'conducto') {
                 renderizarTubosInternos(div, prisma, diametro, cols);
-                div.addEventListener('dblclick', function() { cambiarRotacionManual(90); });
+
+                div.addEventListener('dblclick', function(e) {
+                    if (!elementosSeleccionados.has(this)) seleccionarElemento(this);
+                    cambiarRotacionManual(90);
+                });
+
             } else {
                 let cl = tipo === 'cables' ? 'texto-libre cables-totales' : 'texto-libre';
                 div.innerHTML = `<div class="${cl}">${texto}</div>`;
-                div.addEventListener('dblclick', function() {
-                    let nuevo = prompt("Editar nota:", this.innerText);
-                    if(nuevo) this.querySelector('.texto-libre').innerText = nuevo;
+                
+                div.addEventListener('dblclick', function(e) {
+                    let actual = this.innerText;
+                    let msg = tipo === 'cables' ? "Actualizar Cables Totales:" : "Editar nota:";
+                    let nuevo = prompt(msg, actual);
+                    if(nuevo !== null && nuevo.trim() !== "") this.querySelector('.texto-libre').innerText = nuevo;
                 });
             }
 
             lienzo.appendChild(div);
-            seleccionarElemento(div);
+            
+            if (!modoSeleccionMultiple) {
+                seleccionarElemento(div);
+            } else {
+                div.classList.add('selected');
+                elementosSeleccionados.add(div);
+            }
         }
 
-        interact('.elemento-draggable').draggable({
-            inertia: true,
-            modifiers: [ interact.modifiers.restrictRect({ restriction: 'parent', endOnly: true }) ],
-            listeners: {
-                start(event) { if (!elementosSeleccionados.has(event.target)) seleccionarElemento(event.target); },
-                move (event) {
-                    elementosSeleccionados.forEach(el => {
-                        let x = (parseFloat(el.getAttribute('data-x')) || 0) + event.dx;
-                        let y = (parseFloat(el.getAttribute('data-y')) || 0) + event.dy;
-                        let rot = el.getAttribute('data-rotacion') || 0;
-                        let scale = el.getAttribute('data-scale') || 1;
-                        el.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg) scale(${scale})`;
-                        el.setAttribute('data-x', x);
-                        el.setAttribute('data-y', y);
-                    });
+        interact('.elemento-draggable')
+            .draggable({
+                inertia: true,
+                modifiers: [ interact.modifiers.restrictRect({ restriction: 'parent', endOnly: true }) ],
+                listeners: {
+                    start(event) { 
+                        if (!elementosSeleccionados.has(event.target)) seleccionarElemento(event.target); 
+                    },
+                    move (event) {
+                        elementosSeleccionados.forEach(el => {
+                            let x = (parseFloat(el.getAttribute('data-x')) || 0) + event.dx;
+                            let y = (parseFloat(el.getAttribute('data-y')) || 0) + event.dy;
+                            let rot = el.getAttribute('data-rotacion') || 0;
+                            let scale = el.getAttribute('data-scale') || 1;
+                            
+                            el.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg) scale(${scale})`;
+                            el.setAttribute('data-x', x);
+                            el.setAttribute('data-y', y);
+
+                            actualizarCaraDeElemento(el);
+                        });
+                    }
                 }
-            }
-        });
+            })
+            .gesturable({
+                listeners: {
+                    start(event) { 
+                        if (!elementosSeleccionados.has(event.target)) seleccionarElemento(event.target); 
+                    },
+                    move (event) {
+                        elementosSeleccionados.forEach(el => {
+                            let x = parseFloat(el.getAttribute('data-x')) || 0;
+                            let y = parseFloat(el.getAttribute('data-y')) || 0;
+                            let rot = el.getAttribute('data-rotacion') || 0;
+                            let scale = parseFloat(el.getAttribute('data-scale')) || 1;
+
+                            scale += event.ds;
+                            if (scale < 0.4) scale = 0.4;
+                            if (scale > 3) scale = 3;
+
+                            el.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg) scale(${scale})`;
+                            el.setAttribute('data-scale', scale);
+                        });
+                    }
+                }
+            });
 
         function mostrarBanner(mensaje, colorBg) {
             const banner = document.getElementById('banner-estado');
             banner.innerText = mensaje;
             banner.style.backgroundColor = colorBg;
             banner.style.display = 'block';
-            setTimeout(() => { banner.style.display = 'none'; }, 3000);
+            setTimeout(() => { banner.style.display = 'none'; }, 4000);
         }
 
         document.getElementById('btn-guardar').addEventListener('click', () => {
             let btn = document.getElementById('btn-guardar');
-            btn.innerText = "Guardando...";
+            btn.innerText = "Capturando...";
+
             seleccionarElemento(null);
 
             html2canvas(lienzo, { useCORS: true, scale: 2 }).then(canvas => {
+                let imagenBase64 = canvas.toDataURL("image/png");
+
                 estadoLienzo.elementos = [];
-                estadoLienzo.imagen_base64 = canvas.toDataURL("image/png");
+                estadoLienzo.imagen_base64 = imagenBase64;
 
                 document.querySelectorAll('.elemento-draggable').forEach(el => {
                     if (el.style.display !== 'none') {
@@ -403,20 +586,67 @@
                     }
                 });
 
+                localStorage.setItem(`arqueta_${arquetaId}`, JSON.stringify(estadoLienzo));
+
+                btn.innerText = "Guardando...";
+
+                if (!navigator.onLine) {
+                    guardarEnColaOffline(estadoLienzo);
+                    alert("⚠️ Sin conexión a internet. El abatimiento ha quedado guardado localmente en tu móvil. Se subirá a Google Sheets automáticamente al recuperar la cobertura.");
+                    btn.innerText = "GUARDAR";
+                    return;
+                }
+
                 fetch(urlScript, {
                     method: 'POST',
                     mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(estadoLienzo)
                 }).then(() => {
-                    alert("¡Abatimiento guardado en Google Sheets!");
+                    alert("¡Abatimiento guardado correctamente en Google Sheets!");
                     btn.innerText = "GUARDAR";
-                }).catch(() => {
-                    alert("⚠️ Error al guardar.");
+                }).catch(err => {
+                    guardarEnColaOffline(estadoLienzo);
+                    alert("⚠️ Error al conectar con el servidor. El abatimiento se guardó localmente en el móvil.");
                     btn.innerText = "GUARDAR";
                 });
             });
         });
+
+        function guardarEnColaOffline(datos) {
+            let cola = JSON.parse(localStorage.getItem('cola_pendientes_arqueta') || '[]');
+            cola = cola.filter(item => item.id_arqueta !== datos.id_arqueta);
+            cola.push(datos);
+            localStorage.setItem('cola_pendientes_arqueta', JSON.stringify(cola));
+            mostrarBanner("⚠️ Guardado localmente sin conexión", "#ffc107");
+        }
+
+        function sincronizarPendientesOffline() {
+            if (!navigator.onLine) return;
+
+            let cola = JSON.parse(localStorage.getItem('cola_pendientes_arqueta') || '[]');
+            if (cola.length === 0) return;
+
+            mostrarBanner(`🔄 Sincronizando ${cola.length} abatimiento(s) pendiente(s)...`, "#17a2b8");
+
+            let promesas = cola.map(datos => {
+                return fetch(urlScript, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(datos)
+                });
+            });
+
+            Promise.all(promesas).then(() => {
+                localStorage.removeItem('cola_pendientes_arqueta');
+                mostrarBanner("✅ ¡Todos los abatimientos pendientes se han subido a Google Sheets!", "#28a745");
+            }).catch(err => {
+                console.error("Error al sincronizar cola offline:", err);
+            });
+        }
+
+        window.addEventListener('online', sincronizarPendientesOffline);
 
         inicializar();
     </script>
