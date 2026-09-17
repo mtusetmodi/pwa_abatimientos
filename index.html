@@ -134,7 +134,8 @@
             navigator.serviceWorker.register('./sw.js').catch(err => console.error(err));
         }
 
-        const urlScript = "https://script.google.com/macros/s/AKfycbxwwuGB0KT-s1ntqKDaWvIn__W5jJxCCpY2NqdUvtwb-6WXMNMFY9RjQIPoTpHC85Lh/exec"; 
+        // NUEVA URL PÚBLICA DESPLEGADA DE GOOGLE APPS SCRIPT
+        const urlScript = "https://script.google.com/macros/s/AKfycbxaaY2_JWJJ1O7cCG7Uqypw-7BtwIco8XxDPMBWgeyS2xzquy7-35p21qJvUopZ8EGs/exec"; 
 
         const urlParams = new URLSearchParams(window.location.search);
         let rawArqueta = urlParams.get('arqueta') || "SIN_ID";
