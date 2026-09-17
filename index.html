@@ -224,53 +224,41 @@
             }
         }
 
-        // AUTO IA APPSHEET CON DESCARGA Y LIMPIEZA BASE64 RIGUROSA
+        // AUTO IA CON OBTENCIÓN ROBUSTA DE BASE64 DESDE GOOGLE DRIVE VÍA POST APPS SCRIPT
         document.getElementById('btn-auto-appsheet').addEventListener('click', async () => {
-            mostrarBanner("⏳ Procesando fotos de AppSheet...", "#6f42c1");
+            mostrarBanner("⏳ Obteniendo fotos desde Google Drive...", "#6f42c1");
 
             let caras = ['A', 'B', 'C', 'D'];
             let procesadas = 0;
 
             for (let cara of caras) {
-                let urlFoto = fotosAppSheet[cara];
-                if (urlFoto && urlFoto.trim() !== "" && urlFoto !== "null" && urlFoto !== "undefined") {
+                let rutaFoto = fotosAppSheet[cara];
+                if (rutaFoto && rutaFoto.trim() !== "" && rutaFoto !== "null" && rutaFoto !== "undefined") {
                     try {
-                        mostrarBanner(`🤖 Descargando y analizando Cara ${cara}...`, "#e83e8c");
-                        
-                        let base64Puro = "";
+                        mostrarBanner(`🤖 Buscando y analizando foto de la Cara ${cara}...`, "#e83e8c");
 
-                        if (urlFoto.startsWith("http")) {
-                            let resp = await fetch(urlFoto);
-                            let blob = await resp.blob();
+                        // Petición POST a Apps Script para traer el Base64 limpio sin depender de redirecciones GET
+                        let bodyData = new URLSearchParams();
+                        bodyData.append('accion', 'obtener_foto_individual');
+                        bodyData.append('ruta', rutaFoto);
 
-                            base64Puro = await new Promise((resolve, reject) => {
-                                let reader = new FileReader();
-                                reader.onloadend = () => {
-                                    let result = reader.result;
-                                    if (result && result.includes(',')) {
-                                        resolve(result.split(',')[1]);
-                                    } else {
-                                        reject("Formato base64 no válido");
-                                    }
-                                };
-                                reader.onerror = reject;
-                                reader.readAsDataURL(blob);
-                            });
-                        } else {
-                            base64Puro = urlFoto.includes(',') ? urlFoto.split(',')[1] : urlFoto;
-                        }
+                        let resp = await fetch(urlScript, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: bodyData
+                        });
 
-                        // Limpiar cualquier salto de línea o espacio en blanco que corrompa la carga útil del JSON
-                        base64Puro = base64Puro.replace(/[\r\n\s]/g, "");
+                        let resJson = await resp.json();
 
-                        if (base64Puro && base64Puro.length > 100) {
-                            await enviarAGeminiIA(base64Puro, cara);
+                        if (resJson && resJson.base64) {
+                            let base64Limpio = resJson.base64.replace(/[\r\n\s]/g, "");
+                            await enviarAGeminiIA(base64Limpio, cara);
                             procesadas++;
                         } else {
-                            console.warn(`La imagen Base64 para la Cara ${cara} está vacía o no es válida.`);
+                            console.warn(`No se pudo obtener la imagen en Base64 para Cara ${cara}`);
                         }
                     } catch(e) {
-                        console.warn(`No se pudo procesar la foto de la Cara ${cara}:`, e);
+                        console.warn(`Error al recuperar o analizar la foto de la Cara ${cara}:`, e);
                     }
                 }
             }
@@ -278,7 +266,7 @@
             if (procesadas > 0) {
                 mostrarBanner("✅ ¡Análisis automático completado!", "#28a745");
             } else {
-                alert("⚠️ No se pudieron descargar imágenes válidas desde las URLs de AppSheet.");
+                alert("⚠️ No se pudieron recuperar las fotos desde Google Drive.");
             }
         });
 
