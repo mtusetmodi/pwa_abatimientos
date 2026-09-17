@@ -134,7 +134,6 @@
             navigator.serviceWorker.register('./sw.js').catch(err => console.error(err));
         }
 
-        // NUEVA URL PÚBLICA DESPLEGADA DE GOOGLE APPS SCRIPT
         const urlScript = "https://script.google.com/macros/s/AKfycbxaaY2_JWJJ1O7cCG7Uqypw-7BtwIco8XxDPMBWgeyS2xzquy7-35p21qJvUopZ8EGs/exec"; 
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -160,11 +159,11 @@
 
         function inicializar() { 
             renderizarListaConductos(); 
-            cargarOAutoGenerar();
+            cargarEsquema();
         }
 
-        function cargarOAutoGenerar() {
-            mostrarBanner("⏳ Cargando esquema...", "#6f42c1");
+        function cargarEsquema() {
+            mostrarBanner("⏳ Cargando...", "#6f42c1");
 
             let urlConsulta = `${urlScript}?arqueta=${encodeURIComponent(arquetaId)}`;
 
@@ -172,7 +171,6 @@
                 .then(r => r.json())
                 .then(data => {
                     lienzo.innerHTML = "";
-                    asegurarCablesTotalesCruz();
                     
                     if (data && data.elementos && data.elementos.length > 0) {
                         data.elementos.forEach(el => {
@@ -180,6 +178,7 @@
                         });
                         mostrarBanner("✅ Esquema cargado", "#28a745");
                     } else {
+                        asegurarCablesTotalesCruz();
                         mostrarBanner("✨ Listo para editar", "#17a2b8");
                     }
                     seleccionarElemento(null);
@@ -375,7 +374,7 @@
             banner.innerText = mensaje;
             banner.style.backgroundColor = colorBg;
             banner.style.display = 'block';
-            setTimeout(() => { banner.style.display = 'none'; }, 4000);
+            setTimeout(() => { banner.style.display = 'none'; }, 3000);
         }
 
         document.getElementById('btn-guardar').addEventListener('click', () => {
